@@ -1,0 +1,9 @@
+__pycache__
+.vscode
+.ipynb_checkpoints
+sample.xlsx
+synthpop.csv
+synthpop.R
+normal_vs_uniform.ipynb
+skewed_mvn.py
+Object_Experiments.ipynb
