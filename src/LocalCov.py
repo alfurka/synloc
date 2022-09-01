@@ -1,8 +1,8 @@
-from .LocalResampler import LocalResampler
+from .kNNResampler import kNNResampler
 from .tools import *
 from scipy.stats import multivariate_normal
 
-class LocalCov(LocalResampler):
+class LocalCov(kNNResampler):
     def __init__(self, data:pd.DataFrame, K:int=30, normalize:bool=True, clipping:bool=True, Args_NearestNeighbors:dict={}) -> None:
         super().__init__(data, K, normalize, clipping, Args_NearestNeighbors, method=self.method)
         

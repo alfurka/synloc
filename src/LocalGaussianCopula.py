@@ -1,9 +1,9 @@
-from .LocalResampler import LocalResampler
+from .kNNResampler import kNNResampler
 from .tools import *
 from synthia import GaussianCopula, CopulaDataGenerator
 
 
-class LocalGaussianCopula(LocalResampler):
+class LocalGaussianCopula(kNNResampler):
     def __init__(self, data:pd.DataFrame, K:int=30, normalize:bool=True, clipping:bool=True, Args_NearestNeighbors:dict={}):
         super().__init__(data, K, normalize, clipping, Args_NearestNeighbors, method=self.method)
     

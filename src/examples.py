@@ -1,10 +1,10 @@
-from .LocalResampler import LocalResampler
+from .kNNResampler import kNNResampler
 from .tools import *
 from mixedvines.mixedvine import MixedVine
 from synthia import FPCADataGenerator
 
 
-class LocalMixedVine(LocalResampler):
+class LocalMixedVine(kNNResampler):
     def __init__(self, data: pd.DataFrame, cont_cols:list, K: int = 30, normalize: bool = True, clipping: bool = True, Args_NearestNeighbors: dict = {}, method='normal') -> None:
         super().__init__(data, K, normalize, clipping, Args_NearestNeighbors, method = self.method)
         self.cont_cols = cont_cols
@@ -13,7 +13,7 @@ class LocalMixedVine(LocalResampler):
         generator = MixedVine.fit(data.values, self.cont_cols)
         return generator.rvs(1)[0]
 
-class LocalFPCA(LocalResampler):
+class LocalFPCA(kNNResampler):
     def __init__(self, data: pd.DataFrame, K: int = 30, normalize: bool = True, clipping: bool = True, Args_NearestNeighbors: dict = {}) -> None:
         super().__init__(data, K, normalize, clipping, Args_NearestNeighbors, method = self.method)
     def round_integers(self, integer_columns:list, stochastic:bool = True):    

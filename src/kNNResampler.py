@@ -1,10 +1,10 @@
-from tools import *
+from .tools import *
 from sklearn.neighbors import NearestNeighbors
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
 
-class LocalResampler(object):
+class kNNResampler(object):
     def __init__ (self, data:pd.DataFrame, K:int = 30, normalize:bool = True, clipping:bool = True, Args_NearestNeighbors:dict = {}, method = 'normal') -> None: 
         ### Initializing 
 

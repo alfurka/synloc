@@ -71,7 +71,3 @@ def compareplots(original_data, syn_data, variable, fig_size = (10,8)):
             print("variable list's length must be 1, 2 or 3. Cannot plot more than 3 variables.")
 def compareStats():
     pass
-
-# Experiments here...
-if __name__ =='__main__':
-    print(stochastic_up_or_down(pd.DataFrame([[1,2,3],[3,4,5]]), 0.7))
