@@ -95,7 +95,7 @@ from synloc.tools import stochastic_rounder
 from synthia import FPCADataGenerator
 
 class LocalFPCA(kNNResampler):
-    def __init__(self, data: pd.DataFrame, K: int = 30, normalize: bool = True, clipping: bool = True, Args_NearestNeighbors: dict = {}) -> None:
+    def __init__(self, data, K = 30, normalize = True, clipping = True, Args_NearestNeighbors = {}):
         super().__init__(data, K, normalize, clipping, Args_NearestNeighbors, method = self.method)
     def round_integers(self, integer_columns:list, stochastic:bool = True):    
         if self.fitted:
@@ -133,13 +133,11 @@ One solution is it use [mixedvines](https://github.com/asnelt/mixedvines) packag
 
 ```python
 from synloc import kNNResampler
-from synloc.tools import stochastic_rounder 
 from mixedvines.mixedvine import MixedVine
-import pandas as pd
 
 
 class LocalMixedVine(kNNResampler):
-    def __init__(self, data: pd.DataFrame, cont_cols:list, K: int = 30, normalize: bool = True, clipping: bool = True, Args_NearestNeighbors: dict = {}) -> None:
+    def __init__(self, data, cont_cols, K = 30, normalize = True, clipping = True, Args_NearestNeighbors = {}):
         super().__init__(data, K, normalize, clipping, Args_NearestNeighbors, method = self.method)
         self.cont_cols = cont_cols
     
