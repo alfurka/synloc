@@ -21,7 +21,7 @@ setup(
     install_requires=[
 
     ],
-    url="git...",
+    url="https://github.com/alfurka/synloc",
     author="Ali Furkan Kalay",
     author_email="alfurka@gmail.com",
 
