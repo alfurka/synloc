@@ -1,11 +1,12 @@
-from .kNNResampler import kNNResampler
-from .tools import *
+from synloc import kNNResampler
+from synloc.tools import stochastic_rounder 
 from mixedvines.mixedvine import MixedVine
 from synthia import FPCADataGenerator
+import pandas as pd
 
 
 class LocalMixedVine(kNNResampler):
-    def __init__(self, data: pd.DataFrame, cont_cols:list, K: int = 30, normalize: bool = True, clipping: bool = True, Args_NearestNeighbors: dict = {}, method='normal') -> None:
+    def __init__(self, data: pd.DataFrame, cont_cols:list, K: int = 30, normalize: bool = True, clipping: bool = True, Args_NearestNeighbors: dict = {}) -> None:
         super().__init__(data, K, normalize, clipping, Args_NearestNeighbors, method = self.method)
         self.cont_cols = cont_cols
     

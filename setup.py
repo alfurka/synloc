@@ -30,6 +30,5 @@ setup(
         "sklearn",
         "tqdm"
     ],
-    package_dir={'':'synloc'},
     packages=find_packages(),
 )

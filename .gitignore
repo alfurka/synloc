@@ -9,3 +9,6 @@ normal_vs_uniform.ipynb
 skewed_mvn.py
 Object_Experiments.ipynb
 Paper_Graphs.ipynb
+synloc.egg-info
+dist
+build
