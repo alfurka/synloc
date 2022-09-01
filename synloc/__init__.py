@@ -1,3 +1,3 @@
 from .kNNResampler import kNNResampler
-from .dists import *
-from .examples import *
+from .dists import LocalCov, LocalGaussianCopula
+from .examples import LocalFPCA, LocalMixedVine
