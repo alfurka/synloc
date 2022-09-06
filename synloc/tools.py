@@ -1,7 +1,7 @@
 import numpy as np 
 import matplotlib.pyplot as plt
 import pandas as pd
-
+from scipy import stats
 
 def fill_na_with_median(dataframe):
     dataframe = dataframe.fillna(dataframe.median(0))
@@ -72,6 +72,11 @@ def compareplots(original_data, syn_data, variable, fig_size = (10,8)):
 def compareStats():
     pass
 
-# Experiments here...
-if __name__ =='__main__':
-    print(stochastic_up_or_down(pd.DataFrame([[1,2,3],[3,4,5]]), 0.7))
+
+def sample_trivariate_xyz(size = 1000):
+    x = stats.beta.rvs(a=0.1, b=0.1, size=size)
+    y = stats.beta.rvs(a=0.1, b=0.5, size=size)
+    return pd.DataFrame({
+        'x': x,
+        'y': y,
+        'z': np.random.normal(size=size) + y * 10})
