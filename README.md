@@ -1,6 +1,6 @@
 # synloc: A Local Resampler Algorithm to Create Synthetic Data
 
-`synloc` is an algorithm to sequentially and locally estimate distributions to create synthetic values from a sample. The proposed methodology can be combined with parametric and nonparametric distributions. 
+`synloc` is an algorithm to sequentially and locally estimate distributions to create synthetic values from a sample. The proposed methodology can be combined with parametric and nonparametric distributions.
 
 # Installation
 
