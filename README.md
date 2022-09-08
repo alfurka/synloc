@@ -220,140 +220,30 @@ resampler.comparePlots(['age','educ', 'annwage'])
 
 ```python
 # Original sample looks like
-data2.head()
+print(data2.head())
 ```
 
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>age</th>
-      <th>educ</th>
-      <th>annwage</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>10538</th>
-      <td>28</td>
-      <td>12</td>
-      <td>22801.0</td>
-    </tr>
-    <tr>
-      <th>11715</th>
-      <td>34</td>
-      <td>16</td>
-      <td>16000.0</td>
-    </tr>
-    <tr>
-      <th>3544</th>
-      <td>31</td>
-      <td>11</td>
-      <td>12500.0</td>
-    </tr>
-    <tr>
-      <th>10149</th>
-      <td>36</td>
-      <td>13</td>
-      <td>19000.0</td>
-    </tr>
-    <tr>
-      <th>3918</th>
-      <td>28</td>
-      <td>16</td>
-      <td>16993.0</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
+           age  educ  annwage
+    10538   28    12  22801.0
+    11715   34    16  16000.0
+    3544    31    11  12500.0
+    10149   36    13  19000.0
+    3918    28    16  16993.0
+    
 
 
 ```python
 #synthetic sample looks like
-resampler.synthetic.head()
+print(resampler.synthetic.head())
 ```
 
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>age</th>
-      <th>educ</th>
-      <th>annwage</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>29</td>
-      <td>12</td>
-      <td>16236.643091</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>33</td>
-      <td>16</td>
-      <td>18432.093681</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>30</td>
-      <td>11</td>
-      <td>12190.666403</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>36</td>
-      <td>13</td>
-      <td>20126.695065</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>27</td>
-      <td>15</td>
-      <td>23331.840903</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
+       age  educ       annwage
+    0   29    12  16236.643091
+    1   33    16  18432.093681
+    2   30    11  12190.666403
+    3   36    13  20126.695065
+    4   27    15  23331.840903
+    
 
 
 ```python
