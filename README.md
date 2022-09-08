@@ -47,7 +47,7 @@ resampler = LocalCov(data = data, K = 30)
 syn_data = resampler.fit() 
 ```
 
-    100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:01<00:00, 784.56it/s]
+    100%|██████████| 1000/1000 [00:01<00:00, 687.53it/s]
     
 
 The default sample size is the size of the original sample (i.e., 1000). It can be changed while fitting the distributions:
@@ -89,7 +89,7 @@ We locally estimate the `Gaussian Copula` and from each estimated distributions 
 syn_data_copula = resampler.fit() 
 ```
 
-    100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:03<00:00, 300.94it/s]
+    100%|██████████| 1000/1000 [00:03<00:00, 272.71it/s]
     
 
 Comparing the original sample using a 3-D Scatter:
@@ -99,7 +99,11 @@ Comparing the original sample using a 3-D Scatter:
 resampler.comparePlots(['x','y','z'])
 ```
 
+
+    
 ![png](README_files/README_13_0.png)
+    
+
 
 Even though the distribution of the original sample substantially differs from multivariate normal, locally estimated distributions can replicate the original distribution quite accurately. 
 
@@ -151,7 +155,7 @@ resampler.fit()
 resampler.comparePlots(['x','y','z'])
 ```
 
-    100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:02<00:00, 426.86it/s]
+    100%|██████████| 1000/1000 [00:02<00:00, 346.47it/s]
     
 
 
@@ -204,9 +208,154 @@ resampler.fit()
 resampler.comparePlots(['age','educ', 'annwage'])
 ```
 
-    100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [02:10<00:00,  7.66it/s]
+    100%|██████████| 1000/1000 [02:04<00:00,  8.05it/s]
     
 
 
     
 ![png](README_files/README_21_1.png)
+    
+
+
+
+```python
+# Original sample looks like
+data2.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>age</th>
+      <th>educ</th>
+      <th>annwage</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>10538</th>
+      <td>28</td>
+      <td>12</td>
+      <td>22801.0</td>
+    </tr>
+    <tr>
+      <th>11715</th>
+      <td>34</td>
+      <td>16</td>
+      <td>16000.0</td>
+    </tr>
+    <tr>
+      <th>3544</th>
+      <td>31</td>
+      <td>11</td>
+      <td>12500.0</td>
+    </tr>
+    <tr>
+      <th>10149</th>
+      <td>36</td>
+      <td>13</td>
+      <td>19000.0</td>
+    </tr>
+    <tr>
+      <th>3918</th>
+      <td>28</td>
+      <td>16</td>
+      <td>16993.0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+#synthetic sample looks like
+resampler.synthetic.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>age</th>
+      <th>educ</th>
+      <th>annwage</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>29</td>
+      <td>12</td>
+      <td>16236.643091</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>33</td>
+      <td>16</td>
+      <td>18432.093681</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>30</td>
+      <td>11</td>
+      <td>12190.666403</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>36</td>
+      <td>13</td>
+      <td>20126.695065</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>27</td>
+      <td>15</td>
+      <td>23331.840903</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+!jupyter nbconvert --output-dir='..' --to markdown README.ipynb
+```
