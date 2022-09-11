@@ -1,7 +1,7 @@
 # synloc: A Local Resampler Algorithm to Create Synthetic Data
 
 <p align="center">
-  <img src="README_files/logo_white_bc.png" />
+  <img src="https://raw.githubusercontent.com/alfurka/synloc/main/README_files/logo_white_bc.png" />
 </p>
 
 `synloc` is an algorithm to sequentially and locally estimate distributions to create synthetic values from a sample. The proposed methodology can be combined with parametric and nonparametric distributions. 
@@ -72,7 +72,7 @@ resampler.comparePlots(['x','y','z'])
 
 
     
-![png](README_files/README_7_0.png)
+![](https://raw.githubusercontent.com/alfurka/synloc/main/README_files/README_7_0.png)
     
 
 
@@ -102,12 +102,8 @@ Comparing the original sample using a 3-D Scatter:
 ```python
 resampler.comparePlots(['x','y','z'])
 ```
-
-
-    
-![png](README_files/README_13_0.png)
-    
-
+ 
+![](https://github.com/alfurka/synloc/raw/main/README_files/README_13_0.png)
 
 Even though the distribution of the original sample substantially differs from multivariate normal, locally estimated distributions can replicate the original distribution quite accurately. 
 
@@ -163,9 +159,7 @@ resampler.comparePlots(['x','y','z'])
     
 
 
-    
-![png](README_files/README_17_1.png)
-    
+![](https://github.com/alfurka/synloc/raw/main/README_files/README_17_1.png) 
 
 
 ## Problem with Discrete Variables
@@ -216,10 +210,7 @@ resampler.comparePlots(['age','educ', 'annwage'])
     
 
 
-    
-![png](README_files/README_21_1.png)
-    
-
+![](https://raw.githubusercontent.com/alfurka/synloc/main/README_files/README_21_1.png)
 
 
 ```python
