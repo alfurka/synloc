@@ -1,11 +1,11 @@
-from .tools import *
+from .tools import fill_na_with_median, compareplots
 from sklearn.neighbors import NearestNeighbors
-import pandas as pd
-import numpy as np
+from pandas import DataFrame
+from numpy import diag, sqrt, cov, random, concatenate, arange
 from tqdm import tqdm
 
 class kNNResampler(object):
-    def __init__ (self, data:pd.DataFrame, K:int = 30, normalize:bool = True, clipping:bool = True, Args_NearestNeighbors:dict = {}, method = 'normal') -> None: 
+    def __init__ (self, data:DataFrame, K:int = 30, normalize:bool = True, clipping:bool = True, Args_NearestNeighbors:dict = {}, method = 'normal') -> None: 
         ### Initializing 
 
         self.data = data.reset_index(drop = True)
@@ -15,7 +15,7 @@ class kNNResampler(object):
         self.Args_NearestNeighbors = Args_NearestNeighbors
         self.clipping = clipping
         self.fitted = False
-    def fit(self, sample_size = None) -> pd.DataFrame:
+    def fit(self, sample_size = None) -> DataFrame:
         ### Assertations
         if sample_size is not None:
             assert type(sample_size) is int
@@ -30,8 +30,8 @@ class kNNResampler(object):
         ### Normalizing data set
 
         if self.normalize:
-            varMatrix = np.diag(np.cov(self.data.T))
-            dataN = self.data / np.sqrt(varMatrix)
+            varMatrix = diag(cov(self.data.T))
+            dataN = self.data / sqrt(varMatrix)
         else: 
             dataN = self.data 
         # dataN is the normalized sample to calculate distances - if normalize == True.
@@ -39,7 +39,7 @@ class kNNResampler(object):
         ### Selecting index:
 
         if sample_size is not None:
-            selected_index = np.random.choice(dataN.index, sample_size)
+            selected_index = random.choice(dataN.index, sample_size)
         else:
             selected_index = dataN.index
             sample_size = self.data.shape[0]
@@ -47,8 +47,8 @@ class kNNResampler(object):
         ### Nearest Neighbor Model
 
         NNfit = NearestNeighbors(n_neighbors = self.K - 1, **self.Args_NearestNeighbors).fit(dataN)
-        neighbors = np.concatenate(
-                (np.arange(self.data.shape[0]).reshape(-1,1), 
+        neighbors = concatenate(
+                (arange(self.data.shape[0]).reshape(-1,1), 
                     NNfit.kneighbors(return_distance=False)), axis = 1)
         
         ### Synthetizing...

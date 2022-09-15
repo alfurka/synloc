@@ -8,7 +8,7 @@ with open(os.path.join(this_dir, "README.md"), encoding='utf-8') as f:
 
 setup(
     name="synloc",
-    version="0.0.1",
+    version="0.0.2",
     author="Ali Furkan Kalay",
     author_email="alfurka@gmail.com",
     url="https://github.com/alfurka/synloc",  
@@ -16,6 +16,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     classifiers=[
+        "Development Status :: 0 - Alpha",
         "Programming Language :: Python :: 3",
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: MIT License",
@@ -32,4 +33,5 @@ setup(
         "tqdm"
     ],
     packages=find_packages(),
+    keywords=['copulas', 'distributions','sampling','synthetic-data','oversampling','nonparametric-distributions','semiparametric','nonparametric','knn'],
 )

@@ -72,9 +72,7 @@ resampler.comparePlots(['x','y','z'])
 
 
     
-![](https://raw.githubusercontent.com/alfurka/synloc/main/README_files/README_7_0.png)
-    
-
+![](https://raw.githubusercontent.com/alfurka/synloc/v.0.0.2/README_files/README_7_0.png)
 
 ## Creating synthetic values with Gaussian Copula
 
@@ -103,7 +101,7 @@ Comparing the original sample using a 3-D Scatter:
 resampler.comparePlots(['x','y','z'])
 ```
  
-![](https://github.com/alfurka/synloc/raw/main/README_files/README_13_0.png)
+![](https://raw.githubusercontent.com/alfurka/synloc/v.0.0.2/README_files/README_13_0.png)
 
 Even though the distribution of the original sample substantially differs from multivariate normal, locally estimated distributions can replicate the original distribution quite accurately. 
 
@@ -159,7 +157,7 @@ resampler.comparePlots(['x','y','z'])
     
 
 
-![](https://github.com/alfurka/synloc/raw/main/README_files/README_17_1.png) 
+![](https://raw.githubusercontent.com/alfurka/synloc/v.0.0.2/README_files/README_17_1.png) 
 
 
 ## Problem with Discrete Variables
@@ -210,7 +208,7 @@ resampler.comparePlots(['age','educ', 'annwage'])
     
 
 
-![](https://raw.githubusercontent.com/alfurka/synloc/main/README_files/README_21_1.png)
+![](https://raw.githubusercontent.com/alfurka/synloc/v.0.0.2/README_files/README_21_1.png)
 
 
 ```python
