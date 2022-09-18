@@ -4,7 +4,6 @@ experimenting.py
 .ipynb_checkpoints
 sample.xlsx
 synthpop.csv
-synthpop.R
 normal_vs_uniform.ipynb
 skewed_mvn.py
 Object_Experiments.ipynb
@@ -13,3 +12,7 @@ synloc.egg-info
 dist
 build
 Paper_Simulations.ipynb
+california_synthpop.csv
+circulars_synthpop.csv
+descriptives.tex
+trivariate_synthpop.csv
