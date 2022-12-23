@@ -38,3 +38,5 @@ class LocalGaussianCopula(kNNResampler):
         generator = CopulaDataGenerator()
         generator.fit(subsample, copula=GaussianCopula() ,parameterize_by=None)
         return generator.generate(1)[0]
+
+
