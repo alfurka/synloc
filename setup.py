@@ -8,7 +8,7 @@ with open(os.path.join(this_dir, "README.md"), encoding='utf-8') as f:
 
 setup(
     name="synloc",
-    version="0.1.0",
+    version="0.1.1",
     author="Ali Furkan Kalay",
     author_email="alfurka@gmail.com",
     url="https://github.com/alfurka/synloc",  
@@ -28,7 +28,7 @@ setup(
         "numpy",
         "scipy",
         "matplotlib",
-        "sklearn",
+        "scikit-learn",
         "tqdm",
         "synthia",
         "k_means_constrained"
