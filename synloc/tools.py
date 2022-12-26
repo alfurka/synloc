@@ -1,4 +1,4 @@
-from numpy import random, floor, vectorize, sin, cos, pi, square
+from numpy import random, floor, vectorize, sin, cos, pi, square, round
 import matplotlib.pyplot as plt
 from pandas import DataFrame
 
@@ -85,3 +85,22 @@ def sample_circulars_xy(size):
     y = 0.5 * x -0.05 * square(x) + r * sin(angles) + random.randn(size)
     return(DataFrame({"x": x,
     "y": y}))
+
+
+def new_cluster_sizes(c, n):
+    total = c.sum()
+    c = c/total * n
+    c = c.round()
+    c = c.astype(int)
+    n_cluster = c.shape[0]
+    new_total = c.sum()
+    diff = new_total - n
+    if diff==0:
+        return c
+    else:
+        for i in range(abs(diff)):
+            if diff > 0:
+                c.iloc[i % n_cluster] -= 1
+            else:
+                c.iloc[i % n_cluster] += 1
+        return c

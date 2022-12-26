@@ -5,7 +5,7 @@ from numpy import diag, sqrt, cov, random, concatenate, arange
 from tqdm import tqdm
 
 class kNNResampler(object):
-    def __init__ (self, data:DataFrame, K:int = 30, normalize:bool = True, clipping:bool = True, Args_NearestNeighbors:dict = {}, method = 'normal') -> None: 
+    def __init__ (self, data:DataFrame, method, K:int = 30, normalize:bool = True, clipping:bool = True, Args_NearestNeighbors:dict = {}) -> None: 
         ### Initializing 
 
         self.data = data.reset_index(drop = True)
@@ -30,7 +30,8 @@ class kNNResampler(object):
         ### Normalizing data set
 
         if self.normalize:
-            varMatrix = diag(cov(self.data.T))
+            varMatrix = diag(cov(self.data.T)).copy()
+            varMatrix[varMatrix==0] = 1 # don't do normalization if the variance is zero.
             dataN = self.data / sqrt(varMatrix)
         else: 
             dataN = self.data 
