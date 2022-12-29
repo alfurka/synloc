@@ -8,11 +8,14 @@ with open(os.path.join(this_dir, "README.md"), encoding='utf-8') as f:
 
 setup(
     name="synloc",
-    version="0.1.1",
+    version="0.1.2",
     author="Ali Furkan Kalay",
     author_email="alfurka@gmail.com",
     url="https://github.com/alfurka/synloc",  
-    description="A Python package to create synthetic data from a locally and sequentially estimated distributions.",
+    description="A Python package to create synthetic data from a locally estimated distributions.",
+    project_urls={
+        'Documentation': 'https://alfurka.github.io/synloc/',
+    },
     long_description=long_description,
     long_description_content_type="text/markdown",
     classifiers=[
