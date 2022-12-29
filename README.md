@@ -58,7 +58,7 @@ syn_data = resampler.fit()
 ```python
 resampler.comparePlots(['x','y','z'])
 ```    
-![](https://raw.githubusercontent.com/alfurka/synloc/v.0.0.2/assets/README_7_0.png)
+![](https://raw.githubusercontent.com/alfurka/synloc/main/assets/README_7_0.png)
 
 ## How to cite?
 
