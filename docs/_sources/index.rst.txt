@@ -31,7 +31,7 @@ A Quick Example
    syn_data = resampler.fit() # data is saved to `syn_data`
    resampler.comparePlots(['x','y','z'])
 
-.. image:: https://raw.githubusercontent.com/alfurka/synloc/main/README_files/README_7_0.png
+.. image:: https://raw.githubusercontent.com/alfurka/synloc/main/assets/README_7_0.png
    :alt: synloc
    :align: center
 
