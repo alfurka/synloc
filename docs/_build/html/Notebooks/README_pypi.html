@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>synloc: A Local Resampler Algorithm to Create Synthetic Data &mdash; Synloc 0.1.2 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> Synloc
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/resamplers.html">Resamplers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/methods.html">Methods</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Synloc</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">synloc: A Local Resampler Algorithm to Create Synthetic Data</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/Notebooks/README_pypi.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt *,
+div.nbinput.container div.input_area pre,
+div.nboutput.container div.output_area pre,
+div.nbinput.container div.input_area .highlight,
+div.nboutput.container div.output_area .highlight {
+    border: none;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+div.nbinput.container > div[class*=highlight],
+div.nboutput.container > div[class*=highlight] {
+    margin: 0;
+}
+
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt * {
+    background: none;
+}
+
+div.nboutput.container div.output_area .highlight,
+div.nboutput.container div.output_area pre {
+    background: unset;
+}
+
+div.nboutput.container div.output_area div.highlight {
+    color: unset;  /* override Pygments text color */
+}
+
+/* avoid gaps between output lines */
+div.nboutput.container div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput.container,
+div.nboutput.container {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput.container,
+    div.nboutput.container {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput.container {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast.container {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput.container div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput.container div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput.container div.prompt,
+div.nboutput.container div.prompt {
+    width: 4.5ex;
+    padding-top: 5px;
+    position: relative;
+    user-select: none;
+}
+
+div.nbinput.container div.prompt > div,
+div.nboutput.container div.prompt > div {
+    position: absolute;
+    right: 0;
+    margin-right: 0.3ex;
+}
+
+@media (max-width: 540px) {
+    div.nbinput.container div.prompt,
+    div.nboutput.container div.prompt {
+        width: unset;
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput.container div.prompt.empty {
+        padding: 0;
+    }
+
+    div.nbinput.container div.prompt > div,
+    div.nboutput.container div.prompt > div {
+        position: unset;
+    }
+}
+
+/* disable scrollbars and line breaks on prompts */
+div.nbinput.container div.prompt pre,
+div.nboutput.container div.prompt pre {
+    overflow: hidden;
+    white-space: pre;
+}
+
+/* input/output area */
+div.nbinput.container div.input_area,
+div.nboutput.container div.output_area {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.input_area,
+    div.nboutput.container div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput.container div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    /*background: #f5f5f5;*/
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput.container div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput.container div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput.container div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+
+div.nbinput.container div.input_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight].math,
+div.nboutput.container div.output_area.rendered_html,
+div.nboutput.container div.output_area > div.output_javascript,
+div.nboutput.container div.output_area:not(.rendered_html) > img{
+    padding: 5px;
+    margin: 0;
+}
+
+/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+div.nbinput.container div.input_area > div[class^='highlight'],
+div.nboutput.container div.output_area > div[class^='highlight']{
+    overflow-y: hidden;
+}
+
+/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+.prompt .copybtn {
+    display: none;
+}
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+.jp-RenderedHTMLCommon table,
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+.jp-RenderedHTMLCommon thead,
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+.jp-RenderedHTMLCommon tr,
+.jp-RenderedHTMLCommon th,
+.jp-RenderedHTMLCommon td,
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+.jp-RenderedHTMLCommon th,
+div.rendered_html th {
+  font-weight: bold;
+}
+.jp-RenderedHTMLCommon tbody tr:nth-child(odd),
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+.jp-RenderedHTMLCommon tbody tr:hover,
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<section id="synloc:-A-Local-Resampler-Algorithm-to-Create-Synthetic-Data">
+<h1>synloc: A Local Resampler Algorithm to Create Synthetic Data<a class="headerlink" href="#synloc:-A-Local-Resampler-Algorithm-to-Create-Synthetic-Data" title="Permalink to this heading"></a></h1>
+<p align="center"><p><img alt="57bbd4bc88ad4c5fbc753d4df977a35c" src="../_images/logo_white_bc.png" /></p>
+</p><p><code class="docutils literal notranslate"><span class="pre">synloc</span></code> is an algorithm to sequentially and locally estimate distributions to create synthetic values from a sample. The proposed methodology can be combined with parametric and nonparametric distributions.</p>
+</section>
+<section id="Installation">
+<h1>Installation<a class="headerlink" href="#Installation" title="Permalink to this heading"></a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">synloc</span></code> can be installed through <a class="reference external" href="https://pypi.org/">PyPI</a>:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pip install synloc
+</pre></div>
+</div>
+<p>(not done yet) # Examples</p>
+<p>Assume that we have a sample with three variables with the following distributions:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{aligned}
+x &amp;\sim Beta(0.1,\,0.1)\\
+y &amp;\sim Beta(0.1,\, 0.5)\\
+z &amp;\sim 10 * y + Normal(0,\,1)
+\end{aligned}\end{split}\]</div>
+<p>The distribution can be generated by <code class="docutils literal notranslate"><span class="pre">tools</span></code> module in <code class="docutils literal notranslate"><span class="pre">synloc</span></code>:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">synloc.tools</span> <span class="kn">import</span> <span class="n">sample_trivariate_xyz</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">sample_trivariate_xyz</span><span class="p">()</span> <span class="c1"># Generates a sample with size 1000 by default.</span>
+</pre></div>
+</div>
+</div>
+<section id="Creating-synthetic-values-with-Multivariate-Normal-Distribution">
+<h2>Creating synthetic values with Multivariate Normal Distribution<a class="headerlink" href="#Creating-synthetic-values-with-Multivariate-Normal-Distribution" title="Permalink to this heading"></a></h2>
+<p>Initializing the resampler:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">synloc</span> <span class="kn">import</span> <span class="n">LocalCov</span>
+<span class="n">resampler</span> <span class="o">=</span> <span class="n">LocalCov</span><span class="p">(</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">,</span> <span class="n">K</span> <span class="o">=</span> <span class="mi">30</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p><strong>Subsample</strong> size is defined as <code class="docutils literal notranslate"><span class="pre">K=30</span></code>. Now, we locally estimate the multivariate normal distribution and from each estimated distributions we draw “synthetic values.”</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">syn_data</span> <span class="o">=</span> <span class="n">resampler</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|██████████| 1000/1000 [00:01&lt;00:00, 687.53it/s]
+</pre></div></div>
+</div>
+<p>The default sample size is the size of the original sample (i.e., 1000). It can be changed while fitting the distributions:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">syn_data</span> <span class="o">=</span> <span class="n">resampler</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span> <span class="c1"># a sample with size 100 created.</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">syn_data</span></code> is a <a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html">pandas.DataFrame</a> where all variables are synthesized.</p>
+<p>Comparing the original sample using a 3-D Scatter:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">resampler</span><span class="o">.</span><span class="n">comparePlots</span><span class="p">([</span><span class="s1">&#39;x&#39;</span><span class="p">,</span><span class="s1">&#39;y&#39;</span><span class="p">,</span><span class="s1">&#39;z&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/Notebooks_README_pypi_7_0.png" src="../_images/Notebooks_README_pypi_7_0.png" />
+</div>
+</div>
+</section>
+<section id="Creating-synthetic-values-with-Gaussian-Copula">
+<h2>Creating synthetic values with Gaussian Copula<a class="headerlink" href="#Creating-synthetic-values-with-Gaussian-Copula" title="Permalink to this heading"></a></h2>
+<p>Initializing the resampler:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">synloc</span> <span class="kn">import</span> <span class="n">LocalGaussianCopula</span>
+<span class="n">resampler</span> <span class="o">=</span> <span class="n">LocalGaussianCopula</span><span class="p">(</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">,</span> <span class="n">K</span> <span class="o">=</span> <span class="mi">30</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>We locally estimate the <code class="docutils literal notranslate"><span class="pre">Gaussian</span> <span class="pre">Copula</span></code> and from each estimated distributions we draw “synthetic values.”</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">syn_data_copula</span> <span class="o">=</span> <span class="n">resampler</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|██████████| 1000/1000 [00:03&lt;00:00, 272.71it/s]
+</pre></div></div>
+</div>
+<p>Comparing the original sample using a 3-D Scatter:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">resampler</span><span class="o">.</span><span class="n">comparePlots</span><span class="p">([</span><span class="s1">&#39;x&#39;</span><span class="p">,</span><span class="s1">&#39;y&#39;</span><span class="p">,</span><span class="s1">&#39;z&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/Notebooks_README_pypi_13_0.png" src="../_images/Notebooks_README_pypi_13_0.png" />
+</div>
+</div>
+<p>Even though the distribution of the original sample substantially differs from multivariate normal, locally estimated distributions can replicate the original distribution quite accurately.</p>
+</section>
+</section>
+<section id="Customized-Models">
+<h1>Customized Models<a class="headerlink" href="#Customized-Models" title="Permalink to this heading"></a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">kNNResampler</span></code> class can be used to utilize estimate and resample from any distributions.</p>
+<section id="functional-Principal-Component-Analysis-(fPCA)">
+<h2>functional Principal Component Analysis (fPCA)<a class="headerlink" href="#functional-Principal-Component-Analysis-(fPCA)" title="Permalink to this heading"></a></h2>
+<p>For example, if the original sample is high-dimensional data, the user can reduce the dimension with <strong>fPCA</strong>. It is possible to implement it with <a class="reference external" href="https://dmey.github.io/synthia/fpca.html">FPCADataGenerator</a> function in <a class="reference external" href="https://github.com/dmey/synthia">Synthia</a> package:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">synloc</span> <span class="kn">import</span> <span class="n">kNNResampler</span>
+<span class="kn">from</span> <span class="nn">synloc.tools</span> <span class="kn">import</span> <span class="n">stochastic_rounder</span>
+<span class="kn">from</span> <span class="nn">synthia</span> <span class="kn">import</span> <span class="n">FPCADataGenerator</span>
+
+<span class="k">class</span> <span class="nc">LocalFPCA</span><span class="p">(</span><span class="n">kNNResampler</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">K</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span> <span class="n">normalize</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">clipping</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">Args_NearestNeighbors</span> <span class="o">=</span> <span class="p">{}):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">clipping</span><span class="p">,</span> <span class="n">Args_NearestNeighbors</span><span class="p">,</span> <span class="n">method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">generator</span> <span class="o">=</span> <span class="n">FPCADataGenerator</span><span class="p">()</span>
+        <span class="n">generator</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">n_fpca_components</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">generator</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<p>Using <code class="docutils literal notranslate"><span class="pre">kNNResampler</span></code> as a parent class, we created <code class="docutils literal notranslate"><span class="pre">LocalFPCA</span></code>. The key component is defining the method for <code class="docutils literal notranslate"><span class="pre">kNNSampler</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">clipping</span><span class="p">,</span> <span class="n">Args_NearestNeighbors</span><span class="p">,</span> <span class="n">method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In the <code class="docutils literal notranslate"><span class="pre">LocalFPCA</span></code> class we define the <code class="docutils literal notranslate"><span class="pre">self.method</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    <span class="n">generator</span> <span class="o">=</span> <span class="n">FPCADataGenerator</span><span class="p">()</span>
+    <span class="n">generator</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">n_fpca_components</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="c1"># reducing dimension to 2</span>
+    <span class="k">return</span> <span class="n">generator</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+</pre></div>
+</div>
+<section id="Example">
+<h3>Example<a class="headerlink" href="#Example" title="Permalink to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">resampler</span> <span class="o">=</span> <span class="n">LocalFPCA</span><span class="p">(</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">)</span>
+<span class="n">resampler</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+<span class="n">resampler</span><span class="o">.</span><span class="n">comparePlots</span><span class="p">([</span><span class="s1">&#39;x&#39;</span><span class="p">,</span><span class="s1">&#39;y&#39;</span><span class="p">,</span><span class="s1">&#39;z&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|██████████| 1000/1000 [00:02&lt;00:00, 346.47it/s]
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/Notebooks_README_pypi_17_1.png" src="../_images/Notebooks_README_pypi_17_1.png" />
+</div>
+</div>
+</section>
+</section>
+<section id="Problem-with-Discrete-Variables">
+<h2>Problem with Discrete Variables<a class="headerlink" href="#Problem-with-Discrete-Variables" title="Permalink to this heading"></a></h2>
+<p>So far, we assumed that original data set contains only continuous variables. It is possible to address this problem by rounding these variables (stochastically or deterministically), or we can use some multivariate distributions that can handle the mixed type variables. Then, we need to define a new a subclass of <code class="docutils literal notranslate"><span class="pre">kNNSampler</span></code>.</p>
+<p>One solution is it use <a class="reference external" href="https://github.com/asnelt/mixedvines">mixedvines</a> package. It allows to specify the discrete type variables.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">synloc</span> <span class="kn">import</span> <span class="n">kNNResampler</span>
+<span class="kn">from</span> <span class="nn">mixedvines.mixedvine</span> <span class="kn">import</span> <span class="n">MixedVine</span> <span class="c1"># pip install mixedvines</span>
+
+
+<span class="k">class</span> <span class="nc">LocalMixedVine</span><span class="p">(</span><span class="n">kNNResampler</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">cont_cols</span><span class="p">,</span> <span class="n">K</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span> <span class="n">normalize</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">clipping</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">Args_NearestNeighbors</span> <span class="o">=</span> <span class="p">{}):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">clipping</span><span class="p">,</span> <span class="n">Args_NearestNeighbors</span><span class="p">,</span> <span class="n">method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cont_cols</span> <span class="o">=</span> <span class="n">cont_cols</span>
+
+    <span class="k">def</span> <span class="nf">method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">generator</span> <span class="o">=</span> <span class="n">MixedVine</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cont_cols</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">generator</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">LocalMixedVine</span></code> takes the argument <code class="docutils literal notranslate"><span class="pre">cont_cols</span></code> which is a boolean list. <code class="docutils literal notranslate"><span class="pre">True</span></code> if it is a continuous variable, <code class="docutils literal notranslate"><span class="pre">False</span></code> if it is discrete. Further, specification can be done following the <a class="reference external" href="https://mixedvines.readthedocs.io/en/latest/">documentation</a>.</p>
+<section id="id1">
+<h3>Example<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[29]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">RuntimeWarning</span><span class="p">)</span>
+
+<span class="n">data2</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_stata</span><span class="p">(</span><span class="s1">&#39;../extract.dta&#39;</span><span class="p">)</span>
+<span class="n">data2</span> <span class="o">=</span> <span class="n">data2</span><span class="p">[[</span><span class="s1">&#39;age&#39;</span><span class="p">,</span><span class="s1">&#39;educ&#39;</span><span class="p">,</span> <span class="s1">&#39;annwage&#39;</span><span class="p">]]</span>
+<span class="n">data2</span> <span class="o">=</span> <span class="n">data2</span><span class="p">[</span><span class="o">~</span><span class="n">data2</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span>
+<span class="n">data2</span><span class="o">.</span><span class="n">age</span> <span class="o">=</span> <span class="n">data2</span><span class="o">.</span><span class="n">age</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int&#39;</span><span class="p">)</span>
+<span class="n">data2</span><span class="o">.</span><span class="n">educ</span> <span class="o">=</span> <span class="n">data2</span><span class="o">.</span><span class="n">educ</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int&#39;</span><span class="p">)</span>
+<span class="n">data2</span> <span class="o">=</span> <span class="n">data2</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+
+<span class="n">resampler</span> <span class="o">=</span> <span class="n">LocalMixedVine</span><span class="p">(</span><span class="n">data</span> <span class="o">=</span> <span class="n">data2</span><span class="p">,</span> <span class="n">K</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">cont_cols</span> <span class="o">=</span> <span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">])</span>
+<span class="n">resampler</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+<span class="n">resampler</span><span class="o">.</span><span class="n">comparePlots</span><span class="p">([</span><span class="s1">&#39;age&#39;</span><span class="p">,</span><span class="s1">&#39;educ&#39;</span><span class="p">,</span> <span class="s1">&#39;annwage&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|██████████| 1000/1000 [02:04&lt;00:00,  8.05it/s]
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/Notebooks_README_pypi_21_1.png" src="../_images/Notebooks_README_pypi_21_1.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[33]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Original sample looks like</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">data2</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+       age  educ  annwage
+10538   28    12  22801.0
+11715   34    16  16000.0
+3544    31    11  12500.0
+10149   36    13  19000.0
+3918    28    16  16993.0
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[32]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#synthetic sample looks like</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">resampler</span><span class="o">.</span><span class="n">synthetic</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+   age  educ       annwage
+0   29    12  16236.643091
+1   33    16  18432.093681
+2   30    11  12190.666403
+3   36    13  20126.695065
+4   27    15  23331.840903
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>jupyter nbconvert --output-dir<span class="o">=</span><span class="s1">&#39;..&#39;</span> --to markdown README.ipynb
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+C:\ProgramData\Anaconda3\lib\site-packages\traitlets\traitlets.py:2202: FutureWarning: Supporting extra quotes around strings is deprecated in traitlets 5.0. You can use &#39;..&#39; instead of &#34;&#39;..&#39;&#34; if you require traitlets &gt;=5.
+  warn(
+[NbConvertApp] WARNING | Config option `kernel_spec_manager_class` not recognized by `NbConvertApp`.
+[NbConvertApp] Converting notebook README.ipynb to markdown
+[NbConvertApp] Support files will be in README_files\
+[NbConvertApp] Making directory ..\README_files
+[NbConvertApp] Making directory ..\README_files
+[NbConvertApp] Making directory ..\README_files
+[NbConvertApp] Making directory ..\README_files
+[NbConvertApp] Writing 9328 bytes to ..\README.md
+</pre></div></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Ali F. Kalay.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
