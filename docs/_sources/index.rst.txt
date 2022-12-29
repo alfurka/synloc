@@ -1,7 +1,7 @@
-Welcome to Synloc's documentation!
+Welcome to synloc's documentation!
 ==================================
 
-.. image:: https://raw.githubusercontent.com/alfurka/synloc/main/README_files/logo_white_bc.png
+.. image:: https://raw.githubusercontent.com/alfurka/synloc/main/assets/logo.png
    :alt: synloc
    :align: center
 
