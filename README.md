@@ -4,6 +4,8 @@
 
 <img src="https://raw.githubusercontent.com/alfurka/synloc/main/assets/logo_white_bc.png" alt = 'synloc'>
 
+[Overview](#overview) | [Installation](#installation) | [A Quick Example](#a-quick-example) | [Documentation](https://alfurka.github.io/synloc/) | [How to cite?](#how-to-cite)
+
 </div>
 
 ## Overview
@@ -59,9 +61,6 @@ syn_data = resampler.fit()
 resampler.comparePlots(['x','y','z'])
 ```    
 ![](https://raw.githubusercontent.com/alfurka/synloc/main/assets/README_7_0.png)
-
-
-**Further documentation is available [here](https://alfurka.github.io/synloc/).**
 
 ## How to cite?
 
