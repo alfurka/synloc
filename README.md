@@ -60,6 +60,9 @@ resampler.comparePlots(['x','y','z'])
 ```    
 ![](https://raw.githubusercontent.com/alfurka/synloc/main/assets/README_7_0.png)
 
+
+**Further documentation is available [here](https://alfurka.github.io/synloc/).**
+
 ## How to cite?
 
 If you use `synloc` in your research, please cite the following paper:
