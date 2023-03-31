@@ -6,6 +6,8 @@
 
 [Overview](#overview) | [Installation](#installation) | [A Quick Example](#a-quick-example) | [Documentation](https://alfurka.github.io/synloc/) | [How to cite?](#how-to-cite)
 
+[![PyPI](https://img.shields.io/pypi/v/synloc)](https://pypi.org/project/synloc) [![Downloads](https://static.pepy.tech/badge/synloc)](https://pepy.tech/project/synloc)
+
 </div>
 
 ## Overview
