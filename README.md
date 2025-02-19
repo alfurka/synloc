@@ -69,10 +69,13 @@ resampler.comparePlots(['x','y','z'])
 If you use `synloc` in your research, please cite the following paper:
 
 ```bibtex
-@article{kalay2022generating,
-  title={Generating Synthetic Data with The Nearest Neighbors Algorithm},
-  author={Kalay, Ali Furkan},
-  journal={arXiv preprint arXiv:2210.00884},
-  year={2022}
+@misc{kalay2025generatingsyntheticdatalocally,
+      title={Generating Synthetic Data with Locally Estimated Distributions for Disclosure Control}, 
+      author={Ali Furkan Kalay},
+      year={2025},
+      eprint={2210.00884},
+      archivePrefix={arXiv},
+      primaryClass={stat.CO},
+      url={https://arxiv.org/abs/2210.00884}, 
 }
 ```
