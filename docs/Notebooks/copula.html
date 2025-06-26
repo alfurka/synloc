@@ -1,0 +1,662 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Custom Models with synloc: Using Copulas for Synthetic Data Generation &mdash; Synloc 0.1.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=92734c54"></script>
+      <script src="../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Resamplers" href="../api/resamplers.html" />
+    <link rel="prev" title="Cluster Resampler" href="clustering.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Synloc
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="nearest_neighbor.html">KNN Resampler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="clustering.html">Cluster Resampler</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Custom Models with synloc: Using Copulas for Synthetic Data Generation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#The-custom-model-template-for-kNNResampler">The custom model template for <code class="docutils literal notranslate"><span class="pre">kNNResampler</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#The-custom-model-template-for-clusterResampler">The custom model template for <code class="docutils literal notranslate"><span class="pre">clusterResampler</span></code></a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/resamplers.html">Resamplers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/methods.html">Methods</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Synloc</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Custom Models with synloc: Using Copulas for Synthetic Data Generation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/Notebooks/copula.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="Custom-Models-with-synloc:-Using-Copulas-for-Synthetic-Data-Generation">
+<h1>Custom Models with synloc: Using Copulas for Synthetic Data Generation<a class="headerlink" href="#Custom-Models-with-synloc:-Using-Copulas-for-Synthetic-Data-Generation" title="Link to this heading"></a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">synloc</span></code> package empowers users to create synthetic datasets by leveraging custom statistical distributions. While <code class="docutils literal notranslate"><span class="pre">synloc</span></code> supports a wide range of parametric and nonparametric models, one of the most powerful and flexible approaches is the use of copulas—statistical tools that model complex dependencies between variables.</p>
+<p><strong>What does this notebook demonstrate?</strong></p>
+<ul class="simple">
+<li><p>Build and use custom synthetic data generators in <code class="docutils literal notranslate"><span class="pre">synloc</span></code>.</p></li>
+<li><p>How to extend <code class="docutils literal notranslate"><span class="pre">synloc</span></code> with your own custom distribution classes, using both k-nearest-neighbor and clustering-based resampling strategies.</p></li>
+<li><p>How to integrate copula-based models (specifically, Gaussian copulas via the <code class="docutils literal notranslate"><span class="pre">synthia</span></code> package) into the <code class="docutils literal notranslate"><span class="pre">synloc</span></code> framework to generate realistic synthetic data that preserves multivariate relationships.</p></li>
+<li><p>Guidance on best practices for subclassing <code class="docutils literal notranslate"><span class="pre">kNNResampler</span></code> and <code class="docutils literal notranslate"><span class="pre">clusterResampler</span></code> to implement your own synthetic data generation logic.</p></li>
+</ul>
+<section id="The-custom-model-template-for-kNNResampler">
+<h2>The custom model template for <code class="docutils literal notranslate"><span class="pre">kNNResampler</span></code><a class="headerlink" href="#The-custom-model-template-for-kNNResampler" title="Link to this heading"></a></h2>
+<p>Here is the template to utilise <code class="docutils literal notranslate"><span class="pre">kNN</span> <span class="pre">Resampler</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">.kNNResampler</span><span class="w"> </span><span class="kn">import</span> <span class="n">kNNResampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">stochastic_rounder</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataFrame</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">myDistributionWithkNN</span><span class="p">(</span><span class="n">kNNResampler</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for k‐nearest‐neighbor synthetic data generators.</span>
+
+<span class="sd">    :param data: Original dataset to synthesize from</span>
+<span class="sd">    :type data: pandas.DataFrame</span>
+<span class="sd">    :param K: Number of neighbors for each synthetic draw (default: 30)</span>
+<span class="sd">    :type K: int, optional</span>
+<span class="sd">    :param normalize: Whether to normalize before neighbor search (default: True)</span>
+<span class="sd">    :type normalize: bool, optional</span>
+<span class="sd">    :param clipping: Clip outputs to the original data range (default: True)</span>
+<span class="sd">    :type clipping: bool, optional</span>
+<span class="sd">    :param Args_NearestNeighbors: Extra kwargs for sklearn.neighbors.NearestNeighbors</span>
+<span class="sd">    :type Args_NearestNeighbors: dict, optional</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">K</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
+        <span class="n">normalize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">clipping</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">n_jobs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">Args_NearestNeighbors</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">clipping</span><span class="p">,</span> <span class="n">n_jobs</span><span class="p">,</span> <span class="n">Args_NearestNeighbors</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subsample</span><span class="p">:</span> <span class="n">DataFrame</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Abstract method: generate a single synthetic sample from a kNN subsample.</span>
+
+<span class="sd">        :param subsample: DataFrame of the K nearest neighbors</span>
+<span class="sd">        :type subsample: pandas.DataFrame</span>
+<span class="sd">        :return: One synthetic observation (array-like or pandas.Series)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Subclasses must implement `method`&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">round_integers</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">integer_columns</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
+        <span class="n">stochastic</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Round specified columns of the generated sample to integers.</span>
+
+<span class="sd">        :param integer_columns: List of column names to round</span>
+<span class="sd">        :type integer_columns: list of str</span>
+<span class="sd">        :param stochastic: If True, use stochastic rounding; else deterministic</span>
+<span class="sd">        :type stochastic: bool, optional</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">fitted</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No synthetic data yet—call `.fit()` first.&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Leverage parent’s rounding routine</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">round_integers</span><span class="p">(</span><span class="n">integer_columns</span><span class="p">,</span> <span class="n">stochastic</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Let’s install a python package named <code class="docutils literal notranslate"><span class="pre">synthia</span></code> to use their copulas:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">synloc</span><span class="w"> </span><span class="kn">import</span> <span class="n">kNNResampler</span><span class="p">,</span> <span class="n">sample_circulars_xy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">synloc.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">stochastic_rounder</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">synthia</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianCopula</span><span class="p">,</span> <span class="n">CopulaDataGenerator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataFrame</span>
+<br/></pre></div>
+</div>
+</div>
+<p>Applying the template above using <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> and <code class="docutils literal notranslate"><span class="pre">CopulaDataGenerator</span></code> methods. See <code class="docutils literal notranslate"><span class="pre">synthia</span></code> package for further explanations for the usage of these distributions.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">kNNCopula</span><span class="p">(</span><span class="n">kNNResampler</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for k‐nearest‐neighbor synthetic data generators.</span>
+
+<span class="sd">    :param data: Original dataset to synthesize from</span>
+<span class="sd">    :type data: pandas.DataFrame</span>
+<span class="sd">    :param K: Number of neighbors for each synthetic draw (default: 30)</span>
+<span class="sd">    :type K: int, optional</span>
+<span class="sd">    :param normalize: Whether to normalize before neighbor search (default: True)</span>
+<span class="sd">    :type normalize: bool, optional</span>
+<span class="sd">    :param clipping: Clip outputs to the original data range (default: True)</span>
+<span class="sd">    :type clipping: bool, optional</span>
+<span class="sd">    :param Args_NearestNeighbors: Extra kwargs for sklearn.neighbors.NearestNeighbors</span>
+<span class="sd">    :type Args_NearestNeighbors: dict, optional</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">K</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
+        <span class="n">normalize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">clipping</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">n_jobs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">Args_NearestNeighbors</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">clipping</span><span class="p">,</span> <span class="n">n_jobs</span><span class="p">,</span> <span class="n">Args_NearestNeighbors</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">round_integers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">integer_columns</span><span class="p">:</span><span class="nb">list</span><span class="p">,</span> <span class="n">stochastic</span><span class="p">:</span><span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Rounds variables to integers.</span>
+
+<span class="sd">        :param integer_columns: The list of variables to be rounded.</span>
+<span class="sd">        :type integer_columns: list</span>
+<span class="sd">        :param stochastic: Variables are rounded by a stochastic process, defaults to True</span>
+<span class="sd">        :type stochastic: bool, optional</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fitted</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">stochastic</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">synthetic</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">integer_columns</span><span class="p">]</span> <span class="o">=</span> <span class="n">stochastic_rounder</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">synthetic</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">integer_columns</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">synthetic</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">integer_columns</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">synthetic</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">integer_columns</span><span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The synthetic sample is not created yet. Use `.fit()` to create synthetic sample.&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subsample</span><span class="p">:</span><span class="n">DataFrame</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Creating synthetic values using Gaussian copula.</span>
+
+<span class="sd">        :param subsample: A subsample defined by the `kNNResampler` class.</span>
+<span class="sd">        :type subsample: pandas.DataFrame</span>
+<span class="sd">        :return: Synthetic values.</span>
+<span class="sd">        :rtype: numpy.darray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">generator</span> <span class="o">=</span> <span class="n">CopulaDataGenerator</span><span class="p">()</span>
+        <span class="n">generator</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">subsample</span><span class="p">,</span> <span class="n">copula</span><span class="o">=</span><span class="n">GaussianCopula</span><span class="p">()</span> <span class="p">,</span><span class="n">parameterize_by</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">generator</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+<br/></pre></div>
+</div>
+</div>
+<p>Let’s replicate the following 2d sample: encircled rings.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">sample_circulars_xy</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+<span class="n">data</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Sampled Data&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;Axes: title={&#39;center&#39;: &#39;Sampled Data&#39;}, xlabel=&#39;x&#39;, ylabel=&#39;y&#39;&gt;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/Notebooks_copula_6_1.png" src="../_images/Notebooks_copula_6_1.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">syn1</span> <span class="o">=</span> <span class="n">kNNCopula</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">K</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+<span class="n">syn1</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Generating 1000 synthetic samples using 16 cores...
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Generating synthetic samples: 100%|██████████| 1000/1000 [00:15&lt;00:00, 66.03it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Synthetic sample generation complete.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>x</th>
+      <th>y</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>-8.249489</td>
+      <td>-10.766477</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>-8.025780</td>
+      <td>-10.811976</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>-8.425689</td>
+      <td>-9.926674</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1.125091</td>
+      <td>-19.019308</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>-7.716767</td>
+      <td>-23.919652</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>995</th>
+      <td>12.127823</td>
+      <td>15.212206</td>
+    </tr>
+    <tr>
+      <th>996</th>
+      <td>-5.146815</td>
+      <td>14.332660</td>
+    </tr>
+    <tr>
+      <th>997</th>
+      <td>-3.353717</td>
+      <td>4.440870</td>
+    </tr>
+    <tr>
+      <th>998</th>
+      <td>6.997454</td>
+      <td>3.682326</td>
+    </tr>
+    <tr>
+      <th>999</th>
+      <td>2.729220</td>
+      <td>-18.563244</td>
+    </tr>
+  </tbody>
+</table>
+<p>1000 rows × 2 columns</p>
+</div></div>
+</div>
+<p>Compare real and synthetic samples:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">syn1</span><span class="o">.</span><span class="n">comparePlots</span><span class="p">([</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/Notebooks_copula_9_0.png" src="../_images/Notebooks_copula_9_0.png" />
+</div>
+</div>
+</section>
+<section id="The-custom-model-template-for-clusterResampler">
+<h2>The custom model template for <code class="docutils literal notranslate"><span class="pre">clusterResampler</span></code><a class="headerlink" href="#The-custom-model-template-for-clusterResampler" title="Link to this heading"></a></h2>
+<p>Instead of <code class="docutils literal notranslate"><span class="pre">kNNResampler</span></code>, we will use <code class="docutils literal notranslate"><span class="pre">clusterResampler</span></code> algorithm. Here is the template for the <code class="docutils literal notranslate"><span class="pre">clusterResampler</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">.clusterResampler</span><span class="w"> </span><span class="kn">import</span> <span class="n">clusterResampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataFrame</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MyClusterResampler</span><span class="p">(</span><span class="n">clusterResampler</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for cluster‐based synthetic data generators.</span>
+
+<span class="sd">    :param data: Original dataset to synthesize from</span>
+<span class="sd">    :type data: pandas.DataFrame</span>
+<span class="sd">    :param n_clusters: Number of clusters to form (default: 8)</span>
+<span class="sd">    :type n_clusters: int, optional</span>
+<span class="sd">    :param size_min: Minimum cluster size to consider (default: None)</span>
+<span class="sd">    :type size_min: int, optional</span>
+<span class="sd">    :param normalize: Whether to normalize before clustering (default: True)</span>
+<span class="sd">    :type normalize: bool, optional</span>
+<span class="sd">    :param clipping: Clip outputs to the original data range (default: True)</span>
+<span class="sd">    :type clipping: bool, optional</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">n_clusters</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span>
+        <span class="n">size_min</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">normalize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">clipping</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">data</span><span class="p">,</span>
+            <span class="n">method</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">,</span>
+            <span class="n">n_clusters</span><span class="o">=</span><span class="n">n_clusters</span><span class="p">,</span>
+            <span class="n">size_min</span><span class="o">=</span><span class="n">size_min</span><span class="p">,</span>
+            <span class="n">normalize</span><span class="o">=</span><span class="n">normalize</span><span class="p">,</span>
+            <span class="n">clipping</span><span class="o">=</span><span class="n">clipping</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cluster</span><span class="p">:</span> <span class="n">DataFrame</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Abstract method: generate synthetic samples for one cluster.</span>
+
+<span class="sd">        :param cluster: DataFrame for a single cluster</span>
+<span class="sd">        :type cluster: pandas.DataFrame</span>
+<span class="sd">        :param size: Number of synthetic samples to produce</span>
+<span class="sd">        :type size: int</span>
+<span class="sd">        :return: Synthetic samples (DataFrame or array-like)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Subclasses must implement `method`&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Here is the implementation with gaussian copula:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">synloc</span><span class="w"> </span><span class="kn">import</span> <span class="n">clusterResampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">synthia</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianCopula</span><span class="p">,</span> <span class="n">CopulaDataGenerator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataFrame</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">clusterGaussCopula</span><span class="p">(</span><span class="n">clusterResampler</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;`clusterGaussCopula` is a method for `clusterResampler` class to</span>
+<span class="sd">    create synthetic values from Gaussian copula.</span>
+
+<span class="sd">    :param data: Original data set to be synthesized</span>
+<span class="sd">    :type data: pandas.DataFrame</span>
+<span class="sd">    :param n_clusters: The number of clusters, defaults to 8</span>
+<span class="sd">    :type n_clusters: int, optional</span>
+<span class="sd">    :param size_min: Required minimum cluster size, defaults to None</span>
+<span class="sd">    :type size_min: int, optional</span>
+<span class="sd">    :param normalize: Normalize sample before defining clusters, defaults to True</span>
+<span class="sd">    :type normalize: bool, optional</span>
+<span class="sd">    :param clipping: trim values greater (smaller) than the maximum (minimum) for each variable, defaults to True</span>
+<span class="sd">    :type clipping: bool, optional</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">n_clusters</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">size_min</span><span class="p">:</span><span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="p">:</span><span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">clipping</span><span class="p">:</span><span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">,</span><span class="n">n_clusters</span> <span class="o">=</span> <span class="n">n_clusters</span><span class="p">,</span> <span class="n">size_min</span> <span class="o">=</span> <span class="n">size_min</span><span class="p">,</span> <span class="n">normalize</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">clipping</span> <span class="o">=</span> <span class="n">clipping</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cluster</span><span class="p">:</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span><span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Creating synthetic values from Gaussian copula.</span>
+
+<span class="sd">        :param cluster: Cluster data</span>
+<span class="sd">        :type cluster: pandas.DataFrame</span>
+<span class="sd">        :param size: Required number of synthetic observations. Size is equal to the number of observations in the cluster if not specified.</span>
+<span class="sd">        :type size: int</span>
+<span class="sd">        :return: Synthetic values</span>
+<span class="sd">        :rtype: pandas.DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">generator</span> <span class="o">=</span> <span class="n">CopulaDataGenerator</span><span class="p">()</span>
+        <span class="n">generator</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">cluster</span><span class="p">,</span> <span class="n">copula</span><span class="o">=</span><span class="n">GaussianCopula</span><span class="p">()</span> <span class="p">,</span><span class="n">parameterize_by</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="n">syn_sample</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">generator</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">size</span><span class="p">))</span>
+        <span class="n">syn_sample</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">columns</span>
+        <span class="k">return</span> <span class="n">syn_sample</span>
+</pre></div>
+</div>
+</div>
+<p>Let’s create synthetic version of <code class="docutils literal notranslate"><span class="pre">data</span></code> created above:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">DeprecationWarning</span><span class="p">)</span>
+
+<span class="n">syn2</span> <span class="o">=</span> <span class="n">clusterGaussCopula</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">n_clusters</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">size_min</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<span class="n">syn2</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>x</th>
+      <th>y</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>-5.232491</td>
+      <td>-7.443405</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>-7.279081</td>
+      <td>-8.143454</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>-5.760451</td>
+      <td>-8.030917</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>-5.148836</td>
+      <td>-8.521245</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>-8.403539</td>
+      <td>-10.668141</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>15.512784</td>
+      <td>6.989746</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>15.832936</td>
+      <td>7.487828</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>15.703754</td>
+      <td>7.305207</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>16.777673</td>
+      <td>7.482064</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>15.633184</td>
+      <td>5.319847</td>
+    </tr>
+  </tbody>
+</table>
+<p>1000 rows × 2 columns</p>
+</div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">syn2</span><span class="o">.</span><span class="n">comparePlots</span><span class="p">([</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/Notebooks_copula_15_0.png" src="../_images/Notebooks_copula_15_0.png" />
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="clustering.html" class="btn btn-neutral float-left" title="Cluster Resampler" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../api/resamplers.html" class="btn btn-neutral float-right" title="Resamplers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Ali F. Kalay.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

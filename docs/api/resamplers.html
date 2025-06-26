@@ -1,28 +1,27 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Resamplers &mdash; Synloc 0.1.2 documentation</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
   
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="../_static/doctools.js"></script>
-        <script src="../_static/sphinx_highlight.js"></script>
-        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=92734c54"></script>
+      <script src="../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Methods" href="methods.html" />
-    <link rel="prev" title="Cluster Resampler" href="../Notebooks/clustering.html" /> 
+    <link rel="prev" title="Custom Models with synloc: Using Copulas for Synthetic Data Generation" href="../Notebooks/copula.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -30,11 +29,15 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="../index.html" class="icon icon-home"> Synloc
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Synloc
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -44,6 +47,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../Notebooks/nearest_neighbor.html">KNN Resampler</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../Notebooks/clustering.html">Cluster Resampler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Notebooks/copula.html">Custom Models with synloc: Using Copulas for Synthetic Data Generation</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul class="current">
@@ -51,6 +55,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#synloc.kNNResampler"><code class="docutils literal notranslate"><span class="pre">kNNResampler</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#synloc.kNNResampler.comparePlots"><code class="docutils literal notranslate"><span class="pre">kNNResampler.comparePlots()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#synloc.kNNResampler.fit"><code class="docutils literal notranslate"><span class="pre">kNNResampler.fit()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#synloc.kNNResampler.round_integers"><code class="docutils literal notranslate"><span class="pre">kNNResampler.round_integers()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#synloc.clusterResampler"><code class="docutils literal notranslate"><span class="pre">clusterResampler</span></code></a><ul>
@@ -76,7 +81,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../index.html" class="icon icon-home"></a></li>
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">Resamplers</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../_sources/api/resamplers.rst.txt" rel="nofollow"> View page source</a>
@@ -87,55 +92,35 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  
-<style>
-/* CSS overrides for sphinx_rtd_theme */
-
-/* 24px margin */
-.nbinput.nblast.container,
-.nboutput.nblast.container {
-    margin-bottom: 19px;  /* padding has already 5px */
-}
-
-/* ... except between code cells! */
-.nblast.container + .nbinput.container {
-    margin-top: -19px;
-}
-
-.admonition > p:before {
-    margin-right: 4px;  /* make room for the exclamation icon */
-}
-
-/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
-.math {
-    text-align: unset;
-}
-</style>
-<section id="resamplers">
-<h1>Resamplers<a class="headerlink" href="#resamplers" title="Permalink to this heading"></a></h1>
+  <section id="resamplers">
+<h1>Resamplers<a class="headerlink" href="#resamplers" title="Link to this heading"></a></h1>
 <p>This page provides an auto-generated summary of synloc’s API.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="synloc.kNNResampler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">synloc.</span></span><span class="sig-name descname"><span class="pre">kNNResampler</span></span><a class="headerlink" href="#synloc.kNNResampler" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">synloc.</span></span><span class="sig-name descname"><span class="pre">kNNResampler</span></span><a class="headerlink" href="#synloc.kNNResampler" title="Link to this definition"></a></dt>
 <dd><p>Finds the nearest neighbor of each observation and creates synthetic values by the given method.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>data</strong> (<em>pandas.DataFrame</em>) – Original data set to be synthesized</p></li>
-<li><p><strong>method</strong> (<em>function</em>) – Function to be used to create synthetic values from each cluster.</p></li>
+<li><p><strong>method</strong> (<em>function</em>) – Function to be used to create synthetic values from each cluster.
+Must accept a pandas.DataFrame (the neighbors) and return a
+1D array-like object (e.g., pandas.Series, numpy.array) representing
+the synthetic point.</p></li>
 <li><p><strong>K</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of the nearest neighbors used to create synthetic samples, defaults to 30</p></li>
 <li><p><strong>normalize</strong> (<em>bool</em><em>, </em><em>optional</em>) – Normalize sample before defining clusters, defaults to True</p></li>
 <li><p><strong>clipping</strong> (<em>bool</em><em>, </em><em>optional</em>) – trim values greater (smaller) than the maximum (minimum) for each variable, defaults to True</p></li>
+<li><p><strong>n_jobs</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of CPU cores to use for parallel processing. -1 means using all processors. Defaults to -1.</p></li>
 <li><p><strong>Args_NearestNeighbors</strong> (<em>dict</em><em>, </em><em>optional</em>) – <cite>NearestNeighbors</cite> function arguments can be specified if needed. See scikit-learn.org/stable/modules/generated/sklearn.neighbors.NearestNeighbors.html , defaults to {}</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="synloc.kNNResampler.comparePlots">
-<span class="sig-name descname"><span class="pre">comparePlots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#synloc.kNNResampler.comparePlots" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">comparePlots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#synloc.kNNResampler.comparePlots" title="Link to this definition"></a></dt>
 <dd><p>Creating plots to compare the original sample and the synthetic sample.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>variable_list</strong> (<em>list</em>) – A list of variables in the data set. The maximum list size must be 3. The type of the plot depends o the list size: 1-&gt;histogram, 2-&gt;scatter plot, 3-&gt;3D scatter plot.</p></li>
 <li><p><strong>fig_size</strong> (<em>tuple</em><em>, </em><em>optional</em>) – The figure size can be adjusted, defaults to None</p></li>
@@ -146,17 +131,31 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="synloc.kNNResampler.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#synloc.kNNResampler.fit" title="Permalink to this definition"></a></dt>
-<dd><p>Creating synthetic sample.</p>
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#synloc.kNNResampler.fit" title="Link to this definition"></a></dt>
+<dd><p>Creating synthetic sample using parallel processing.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>sample_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Required minimum size. The synthetic sample size will be the sample size if not specified., defaults to None</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Returns the synthetic sample</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="synloc.kNNResampler.round_integers">
+<span class="sig-name descname"><span class="pre">round_integers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">integer_columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stochastic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#synloc.kNNResampler.round_integers" title="Link to this definition"></a></dt>
+<dd><p>Rounds variables to integers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>integer_columns</strong> (<em>list</em>) – The list of variables to be rounded.</p></li>
+<li><p><strong>stochastic</strong> (<em>bool</em><em>, </em><em>optional</em>) – Variables are rounded by a stochastic process, defaults to True</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -165,20 +164,18 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="synloc.clusterResampler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">synloc.</span></span><span class="sig-name descname"><span class="pre">clusterResampler</span></span><a class="headerlink" href="#synloc.clusterResampler" title="Permalink to this definition"></a></dt>
-<dd><p>Creating synthetic sample by clusterig.</p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">synloc.</span></span><span class="sig-name descname"><span class="pre">clusterResampler</span></span><a class="headerlink" href="#synloc.clusterResampler" title="Link to this definition"></a></dt>
+<dd><p>Creating synthetic sample by clustering.</p>
 <p>This class creates subsamples from a given sample. 
 The subsamples are created by clustering the original sample and then 
-sampling from each cluster. The clustering is done by the <cite>KMeansConstrained</cite> 
-function from <cite>k-means-constrained</cite> package.</p>
+sampling from each cluster. The clustering is done by standard KMeans with a heuristic for size_min.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>data</strong> (<em>pandas.DataFrame</em>) – Original data set to be synthesized</p></li>
 <li><p><strong>method</strong> (<em>function</em>) – Function to be used to create synthetic values from each cluster.</p></li>
 <li><p><strong>n_clusters</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of clusters, defaults to 8</p></li>
 <li><p><strong>size_min</strong> (<em>int</em><em>, </em><em>optional</em>) – Required minimum cluster size, defaults to None</p></li>
-<li><p><strong>size_max</strong> (<em>int</em><em>, </em><em>optional</em>) – Required maximum cluster size, defaults to None</p></li>
 <li><p><strong>normalize</strong> (<em>bool</em><em>, </em><em>optional</em>) – Normalize sample before defining clusters, defaults to True</p></li>
 <li><p><strong>clipping</strong> (<em>bool</em><em>, </em><em>optional</em>) – trim values greater (smaller) than the maximum (minimum) for each variable, defaults to True</p></li>
 </ul>
@@ -186,10 +183,10 @@ function from <cite>k-means-constrained</cite> package.</p>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="synloc.clusterResampler.comparePlots">
-<span class="sig-name descname"><span class="pre">comparePlots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#synloc.clusterResampler.comparePlots" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">comparePlots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#synloc.clusterResampler.comparePlots" title="Link to this definition"></a></dt>
 <dd><p>Creating plots to compare the original sample and the synthetic sample.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>variable_list</strong> (<em>list</em>) – A list of variables in the data set. The maximum list size must be 3. The type of the plot depends o the list size: 1-&gt;histogram, 2-&gt;scatter plot, 3-&gt;3D scatter plot.</p></li>
 <li><p><strong>fig_size</strong> (<em>tuple</em><em>, </em><em>optional</em>) – The figure size can be adjusted, defaults to None</p></li>
@@ -200,16 +197,16 @@ function from <cite>k-means-constrained</cite> package.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="synloc.clusterResampler.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#synloc.clusterResampler.fit" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#synloc.clusterResampler.fit" title="Link to this definition"></a></dt>
 <dd><p>Creating synthetic sample.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>sample_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Required minimum size. The synthetic sample size will be the cluster size if not specified., defaults to None</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Returns the synthetic sample</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>pandas.DataFrame</p>
 </dd>
 </dl>
@@ -223,7 +220,7 @@ function from <cite>k-means-constrained</cite> package.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="../Notebooks/clustering.html" class="btn btn-neutral float-left" title="Cluster Resampler" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../Notebooks/copula.html" class="btn btn-neutral float-left" title="Custom Models with synloc: Using Copulas for Synthetic Data Generation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="methods.html" class="btn btn-neutral float-right" title="Methods" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
