@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "synloc"
+version = "0.2"
+authors = [
+    {name = "Ali Furkan Kalay", email = "alfurka@gmail.com"},
+]
+description = "A Python package to create synthetic data from locally estimated distributions"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "pandas",
+    "numpy",
+    "scipy",
+    "matplotlib",
+    "scikit-learn",
+    "tqdm"
+]
+
+[project.urls]
+Homepage = "https://github.com/alfurka/synloc"
+Documentation = "https://alfurka.github.io/synloc/"
