@@ -20,6 +20,28 @@ dependencies = [
     "tqdm"
 ]
 
+keywords = [
+    "copulas",
+    "distributions",
+    "sampling",
+    "synthetic-data",
+    "oversampling",
+    "nonparametric-distributions",
+    "semiparametric",
+    "nonparametric",
+    "knn",
+    "clustering",
+    "k-means",
+    "multivariate-distributions"
+]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Programming Language :: Python :: 3",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent"
+]
+
 [project.urls]
 Homepage = "https://github.com/alfurka/synloc"
 Documentation = "https://alfurka.github.io/synloc/"
