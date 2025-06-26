@@ -1,15 +1,15 @@
 from .tools import fill_na_with_median, compareplots, new_cluster_sizes
 from pandas import DataFrame, Series, concat
 from numpy import diag, sqrt, cov
-from k_means_constrained import KMeansConstrained
+import numpy as np
+from sklearn.cluster import KMeans
 
 class clusterResampler(object):
-    """Creating synthetic sample by clusterig.
+    """Creating synthetic sample by clustering.
 
     This class creates subsamples from a given sample. 
     The subsamples are created by clustering the original sample and then 
-    sampling from each cluster. The clustering is done by the `KMeansConstrained` 
-    function from `k-means-constrained` package.
+    sampling from each cluster. The clustering is done by standard KMeans with a heuristic for size_min.
 
     :param data: Original data set to be synthesized
     :type data: pandas.DataFrame
@@ -19,20 +19,17 @@ class clusterResampler(object):
     :type n_clusters: int, optional
     :param size_min: Required minimum cluster size, defaults to None
     :type size_min: int, optional
-    :param size_max: Required maximum cluster size, defaults to None
-    :type size_max: int, optional
     :param normalize: Normalize sample before defining clusters, defaults to True
     :type normalize: bool, optional
     :param clipping: trim values greater (smaller) than the maximum (minimum) for each variable, defaults to True
     :type clipping: bool, optional
     """
-    def __init__ (self, data:DataFrame, method, n_clusters=8, size_min = None, size_max = None, normalize:bool = True, clipping:bool = True) -> None: 
+    def __init__ (self, data:DataFrame, method, n_clusters=8, size_min = None, normalize:bool = True, clipping:bool = True) -> None: 
 
         self.data = data.reset_index(drop = True)
         self.method = method
         self.size_min = size_min
         self.n_clusters = n_clusters
-        self.size_max = size_max
         self.normalize = normalize
         self.clipping = clipping
         self.fitted = False
@@ -66,28 +63,43 @@ class clusterResampler(object):
         # dataN is the normalized sample to calculate distances - if normalize == True.
 
         
-        ### Find clusters
+        ### Find clusters (Heuristic for size_min)
+        kmeans = KMeans(n_clusters=self.n_clusters, random_state=0)
+        labels = kmeans.fit_predict(dataN)
 
-        clf = KMeansConstrained(n_clusters=self.n_clusters, size_min = self.size_min, size_max=self.size_max)
-        clf.fit_predict(dataN)
-        
-        ### Selecting index:
-
-        cluster_sizes = Series(clf.labels_).value_counts()
+        # Heuristic: enforce size_min by reassigning points from small clusters
+        if self.size_min is not None:
+            labels = labels.copy()
+            cluster_sizes = Series(labels).value_counts()
+            small_clusters = cluster_sizes[cluster_sizes < self.size_min].index.tolist()
+            large_clusters = cluster_sizes[cluster_sizes >= self.size_min].index.tolist()
+            if small_clusters:
+                # Precompute cluster centers for large clusters
+                centers = kmeans.cluster_centers_
+                for sc in small_clusters:
+                    idxs = (labels == sc).nonzero()[0]
+                    for idx in idxs:
+                        # Find nearest large cluster center
+                        point = dataN.iloc[idx].values
+                        dists = [((point - centers[lc])**2).sum() for lc in large_clusters]
+                        nearest = large_clusters[int(np.argmin(dists))]
+                        labels[idx] = nearest
+                # Recompute cluster sizes after reassignment
+                cluster_sizes = Series(labels).value_counts()
+        else:
+            cluster_sizes = Series(labels).value_counts()
 
         if sample_size is not None:
             cluster_sizes = new_cluster_sizes(cluster_sizes, sample_size)
 
-
         syn_samples = []
-        for i in range(cluster_sizes.shape[0]):
-            syn_samples.append(self.method(self.data[clf.labels_ == i], cluster_sizes[i]))
-        
-        self.synthetic = concat(syn_samples, axis = 0)
-        ### Clipping
+        for i in cluster_sizes.index:
+            syn_samples.append(self.method(self.data[labels == i], cluster_sizes[i]))
 
+        self.synthetic = concat(syn_samples, axis=0)
+        ### Clipping
         if self.clipping:
-            self.synthetic = self.synthetic.clip(lower=self.data.min(), upper=self.data.max(), axis = 1)
+            self.synthetic = self.synthetic.clip(lower=self.data.min(), upper=self.data.max(), axis=1)
 
         self.fitted = True
         return self.synthetic

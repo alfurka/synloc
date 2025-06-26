@@ -1,4 +1,4 @@
-from numpy import random, floor, vectorize, sin, cos, pi, square, round
+from numpy import random, floor, sin, cos, pi, square, round
 import matplotlib.pyplot as plt
 from pandas import DataFrame
 
@@ -8,12 +8,14 @@ def fill_na_with_median(dataframe):
     print('Missing values are filled with variable medians.')
     return dataframe
 
-def stochastic_integer(x):
+def stochastic_rounder(x):
+    """
+    Rounds a float to an integer based on a stochastic process.
+    A value of 5.3 has a 30% chance of being rounded to 6 and a 70% chance of being rounded to 5.
+    """
     lower_int = floor(x)
-    upper_int = lower_int + 1
-    return (random.choice([lower_int, upper_int], p=[upper_int - x, x - lower_int]))
-
-stochastic_rounder = vectorize(stochastic_integer)
+    prob = x - lower_int
+    return lower_int + random.binomial(1, prob, size=x.shape)
 
 def stochastic_up_or_down(dataframe, p):
     up_or_down = 2 * (random.binomial(1, 0.5, dataframe.shape) - 0.5)
