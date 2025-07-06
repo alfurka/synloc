@@ -102,7 +102,8 @@ class clusterResampler(object):
             self.synthetic = self.synthetic.clip(lower=self.data.min(), upper=self.data.max(), axis=1)
 
         # Use the same normalization as above
-        self.data_distances = compute_k_distances(dataN, K=self.n_clusters)
+        
+        self.data_distances = compute_k_distances(dataN, K=self.size_min)
         # For synthetic, normalize using the same varMatrix if normalization was applied
         if self.normalize:
             syntheticN = self.synthetic / sqrt(varMatrix)
