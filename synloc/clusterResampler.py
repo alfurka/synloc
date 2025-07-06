@@ -109,7 +109,7 @@ class clusterResampler(object):
             syntheticN = self.synthetic / sqrt(varMatrix)
         else:
             syntheticN = self.synthetic.copy()
-        self.synthetic_distances = compute_k_distances(syntheticN, K=self.n_clusters)
+        self.synthetic_distances = compute_k_distances(syntheticN, K=self.size_min)
 
         self.fitted = True
         return self.synthetic
