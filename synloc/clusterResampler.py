@@ -1,4 +1,4 @@
-from .tools import fill_na_with_median, compareplots, new_cluster_sizes
+from .tools import fill_na_with_median, compareplots, new_cluster_sizes, compute_k_distances
 from pandas import DataFrame, Series, concat
 from numpy import diag, sqrt, cov
 import numpy as np
@@ -100,6 +100,15 @@ class clusterResampler(object):
         ### Clipping
         if self.clipping:
             self.synthetic = self.synthetic.clip(lower=self.data.min(), upper=self.data.max(), axis=1)
+
+        # Use the same normalization as above
+        self.data_distances = compute_k_distances(dataN, K=self.n_clusters)
+        # For synthetic, normalize using the same varMatrix if normalization was applied
+        if self.normalize:
+            syntheticN = self.synthetic / sqrt(varMatrix)
+        else:
+            syntheticN = self.synthetic.copy()
+        self.synthetic_distances = compute_k_distances(syntheticN, K=self.n_clusters)
 
         self.fitted = True
         return self.synthetic

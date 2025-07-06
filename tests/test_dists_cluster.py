@@ -25,3 +25,12 @@ syn1.comparePlots(syn1.data.columns.values)
 syn2.comparePlots(syn2.data.columns.values)
 
 
+print("original data distances for 2D:")
+print(syn1.data_distances.mean(), "±", syn1.data_distances.std())
+print("synthetic data distances for 2D:")
+print(syn1.synthetic_distances.mean(), "±", syn1.synthetic_distances.std())
+
+print("original data distances for 3D:")
+print(syn2.data_distances.mean(), "±", syn2.data_distances.std())
+print("synthetic data distances for 3D:")
+print(syn2.synthetic_distances.mean(), "±", syn2.synthetic_distances.std())

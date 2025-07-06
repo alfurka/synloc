@@ -1,3 +1,4 @@
+from sklearn.neighbors import NearestNeighbors
 from numpy import random, floor, sin, cos, pi, square, round
 import matplotlib.pyplot as plt
 from pandas import DataFrame
@@ -106,3 +107,24 @@ def new_cluster_sizes(c, n):
             else:
                 c.iloc[i % n_cluster] += 1
         return c
+    
+
+
+def compute_k_distances(data, K=5):
+    """
+    For each observation in data, compute the sum of Euclidean distances to its K nearest neighbors (excluding itself).
+    :param data: pandas.DataFrame or numpy.ndarray
+    :param K: int, number of neighbors
+    :return: numpy.ndarray of shape (n_samples,)
+    """
+    import numpy as np
+    if hasattr(data, 'values'):
+        X = data.values
+    else:
+        X = np.asarray(data)
+    n = X.shape[0]
+    nbrs = NearestNeighbors(n_neighbors=K, metric='euclidean').fit(X)
+    distances, indices = nbrs.kneighbors(X)
+    # Exclude the first column (distance to self)
+    k_distances = distances[:, 1:K+1].sum(axis=1)
+    return k_distances

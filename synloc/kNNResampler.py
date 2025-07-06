@@ -1,4 +1,4 @@
-from .tools import fill_na_with_median, compareplots, stochastic_rounder
+from .tools import fill_na_with_median, compareplots, stochastic_rounder, compute_k_distances
 from sklearn.neighbors import NearestNeighbors
 from pandas import DataFrame
 import pandas as pd # Import pandas explicitly for DataFrame creation
@@ -51,6 +51,9 @@ class kNNResampler(object):
         self.data = data.copy().reset_index(drop = True)
         self.method = method
         self.K = K
+        # assert that K must be greater tha n1
+        if self.K < 1:
+            raise ValueError("K must be greater than or equal to 1")
         self.normalize = normalize
         self.Args_NearestNeighbors = Args_NearestNeighbors
         self.clipping = clipping
@@ -187,6 +190,15 @@ class kNNResampler(object):
             for col in self.synthetic.columns:
                 if col in self._data_min and col in self._data_max:
                     self.synthetic[col] = self.synthetic[col].clip(lower=self._data_min[col], upper=self._data_max[col])
+
+        # Use the same K as for resampling
+        self.data_distances = compute_k_distances(dataN, K=self.K)
+        # For synthetic, normalize using the same scale_factors if normalization was applied
+        if self.normalize:
+            syntheticN = self.synthetic / scale_factors
+        else:
+            syntheticN = self.synthetic.copy()
+        self.synthetic_distances = compute_k_distances(syntheticN, K=self.K)
 
         self.fitted = True
         print("Synthetic sample generation complete.")
