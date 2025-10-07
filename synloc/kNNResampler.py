@@ -132,10 +132,8 @@ class kNNResampler(object):
         else:
             nn_to_find = k_neighbors_count - 1
             NNfit = NearestNeighbors(n_neighbors=nn_to_find, **self.Args_NearestNeighbors).fit(dataN)
-            neighbor_indices_only = NNfit.kneighbors(dataN, return_distance=False)
-            neighbors_indices = concatenate(
-                (arange(n_original).reshape(-1, 1), neighbor_indices_only), axis=1
-            )
+            neighbors_indices = NNfit.kneighbors(dataN, return_distance=False)
+            
             if neighbors_indices.shape[1] < k_neighbors_count:
                 diff = k_neighbors_count - neighbors_indices.shape[1]
                 padding = neighbors_indices[:, -1].reshape(-1,1)
