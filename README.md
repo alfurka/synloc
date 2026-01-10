@@ -4,15 +4,32 @@
 
 <img src="https://raw.githubusercontent.com/alfurka/synloc/main/assets/logo_white_bc.png" alt = 'synloc'>
 
-[Overview](#overview) | [Installation](#installation) | [A Quick Example](#a-quick-example) | [Documentation](https://alfurka.github.io/synloc/) | [How to cite?](#how-to-cite)
+[Overview](#overview) | [Installation](#installation) | [A Quick Example](#a-quick-example) | [Documentation](https://alfurka.github.io/synloc/) | [How to cite?](#how-to-cite) | [Replication](#replication)
 
-[![PyPI](https://img.shields.io/pypi/v/synloc)](https://pypi.org/project/synloc) [![Downloads](https://static.pepy.tech/badge/synloc)](https://pepy.tech/project/synloc)
+[![PyPI](https://img.shields.io/pypi/v/synloc)](https://pypi.org/project/synloc) [![Python](https://img.shields.io/pypi/pyversions/synloc)](https://pypi.org/project/synloc) [![Downloads](https://static.pepy.tech/badge/synloc)](https://pepy.tech/project/synloc)
 
 </div>
 
 ## Overview
 
-`synloc` is an algorithm to sequentially and locally estimate distributions to create synthetic versions of a tabular data. The proposed methodology can be combined with parametric and nonparametric distributions. 
+`synloc` is an open-source Python package implementing the **Local Resampler (LR)** algorithm for generating synthetic tabular data while safeguarding privacy. It provides a computationally efficient and flexible approach to synthetic data generation, enabling researchers to work with privacy-preserving datasets that maintain statistical utility.
+
+### Two Subsampling Strategies
+
+Both approaches provide effective disclosure control. Choose based on your priorities:
+
+| Approach | Best for | Key advantage |
+|----------|----------|---------------|
+| **k-Nearest Neighbors (k-NN)** | Stronger disclosure control | Naturally underrepresents outliers, reducing privacy risks |
+| **Clustering-based** | Efficiency & accuracy | Better data utility and computational performance |
+
+**Key features:**
+- Natural disclosure risk reduction by underrepresenting outliers (k-NN variant)
+- Accurate replication of complex distributions, including multimodal and non-convex-support data
+- Flexible trade-off between data utility and privacy protection
+- Compatible with parametric and nonparametric distributions
+
+This implementation aligns with statistical agencies' safe data regulations, including the **k-anonymity** criterion and the **Five Safes** framework adopted by organizations such as the Australian Bureau of Statistics. For the full methodology and theoretical foundations, see the [paper referenced below](#how-to-cite).
 
 ## Installation
 
@@ -71,13 +88,19 @@ resampler.comparePlots(['x','y','z'])
 If you use `synloc` in your research, please cite the following paper:
 
 ```bibtex
-@misc{kalay2025generatingsyntheticdatalocally,
-      title={Generating Synthetic Data with Locally Estimated Distributions for Disclosure Control}, 
-      author={Ali Furkan Kalay},
-      year={2025},
-      eprint={2210.00884},
-      archivePrefix={arXiv},
-      primaryClass={stat.CO},
-      url={https://arxiv.org/abs/2210.00884}, 
+@article{kalay2025generating,
+  author    = {Kalay, Ali Furkan},
+  title     = {Generating Synthetic Data With Locally Estimated Distributions for Disclosure Control},
+  journal   = {Australian \& New Zealand Journal of Statistics},
+  year      = {2025},
+  volume    = {n/a},
+  number    = {n/a},
+  keywords  = {clustering algorithms, computational statistics, k-nearest neighbours, statistical disclosure control, synthetic data},
+  doi       = {10.1111/anzs.70032},
+  url       = {https://onlinelibrary.wiley.com/doi/abs/10.1111/anzs.70032}
 }
 ```
+
+## Replication
+
+For replication materials of the paper, see the [replication folder](replication/).

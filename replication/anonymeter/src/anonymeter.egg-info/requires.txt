@@ -1,0 +1,13 @@
+
+[dev]
+ruff~=0.1.14
+mypy~=1.8.0
+pre-commit~=3.5
+pytest~=7.4
+build~=0.10
+twine~=4.0
+
+[notebooks]
+jupyterlab~=3.4
+matplotlib~=3.5
+seaborn~=0.11
