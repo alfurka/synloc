@@ -95,7 +95,6 @@ If you use `synloc` in your research, please cite the following paper:
     volume = {68},
     number = {1},
     pages = {e70032},
-    keywords = {clustering algorithms, computational statistics, k$$ k $$-nearest neighbours, statistical disclosure control, synthetic data},
     doi = {https://doi.org/10.1111/anzs.70032},
     url = {https://onlinelibrary.wiley.com/doi/abs/10.1111/anzs.70032},
     eprint = {https://onlinelibrary.wiley.com/doi/pdf/10.1111/anzs.70032},
