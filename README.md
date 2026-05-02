@@ -4,7 +4,7 @@
 
 <img src="https://raw.githubusercontent.com/alfurka/synloc/main/assets/logo_white_bc.png" alt = 'synloc'>
 
-[Overview](#overview) | [Installation](#installation) | [A Quick Example](#a-quick-example) | [Documentation](https://alfurka.github.io/synloc/) | [How to cite?](#how-to-cite) | [Replication](#replication)
+[Overview](#overview) | [Data Requirements](#data-requirements) | [Installation](#installation) | [A Quick Example](#a-quick-example) | [Documentation](https://alfurka.github.io/synloc/) | [How to cite?](#how-to-cite) | [Replication](#replication)
 
 [![PyPI](https://img.shields.io/pypi/v/synloc)](https://pypi.org/project/synloc) [![Python](https://img.shields.io/pypi/pyversions/synloc)](https://pypi.org/project/synloc) [![Downloads](https://static.pepy.tech/badge/synloc)](https://pepy.tech/project/synloc)
 
@@ -27,9 +27,20 @@ Both approaches provide effective disclosure control. Choose based on your prior
 - Natural disclosure risk reduction by underrepresenting outliers (k-NN variant)
 - Accurate replication of complex distributions, including multimodal and non-convex-support data
 - Flexible trade-off between data utility and privacy protection
+- Built-in quality diagnostics, including Kolmogorov-Smirnov distances, Wasserstein distances, summary statistics, and correlation-difference metrics
 - Compatible with parametric and nonparametric distributions
 
 This implementation aligns with statistical agencies' safe data regulations, including the **k-anonymity** criterion and the **Five Safes** framework adopted by organizations such as the Australian Bureau of Statistics. For the full methodology and theoretical foundations, see the [paper referenced below](#how-to-cite).
+
+## Data Requirements
+
+`synloc` expects a numeric `pandas.DataFrame`.
+
+- Categorical variables must be encoded before synthesis, for example with `pandas.get_dummies`.
+- Boolean dummy variables are accepted and converted to `0`/`1`.
+- Missing numeric values are filled with column medians during fitting.
+- Columns with only missing values, duplicate column names, infinite values, and non-numeric columns raise clear errors.
+- Integer-like variables can be rounded after synthesis with `round_integers`.
 
 ## Installation
 
@@ -72,9 +83,6 @@ resampler = LocalCov(data = data, K = 30)
 syn_data = resampler.fit() 
 ```
 
-    100%|██████████| 1000/1000 [00:01<00:00, 687.53it/s]
-    
-
 `syn_data` is a [pandas.DataFrame](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html) where all variables are synthesized. Comparing the original sample using a 3-D Scatter:
 
 
@@ -82,6 +90,16 @@ syn_data = resampler.fit()
 resampler.comparePlots(['x','y','z'])
 ```    
 ![](https://raw.githubusercontent.com/alfurka/synloc/main/assets/README_7_0.png)
+
+You can also inspect utility diagnostics after fitting:
+
+```python
+variable_metrics = resampler.compareStats()
+quality = resampler.qualityReport()
+
+print(variable_metrics[["ks_statistic", "wasserstein_distance"]])
+print(quality["overall"])
+```
 
 ## How to cite?
 

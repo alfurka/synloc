@@ -1,102 +1,45 @@
-
-
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" data-content_root="../">
-<head>
-  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Resamplers &mdash; Synloc 0.1.2 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  
-      <script src="../_static/jquery.js?v=5d32c60e"></script>
-      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=e5353d3f"></script>
-      <script src="../_static/doctools.js?v=9bcbadda"></script>
-      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
-      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script src="../_static/js/theme.js"></script>
+    <title>Resamplers &#8212; synloc 1.0.0</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <script src="../_static/documentation_options.js?v=8d563738"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Methods" href="methods.html" />
-    <link rel="prev" title="Custom Models with synloc: Using Copulas for Synthetic Data Generation" href="../Notebooks/copula.html" /> 
-</head>
+    <link rel="prev" title="API reference" href="../api.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
 
-<body class="wy-body-for-nav"> 
-  <div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
+  
+  
 
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
           
-          
-          <a href="../index.html" class="icon icon-home">
-            Synloc
-          </a>
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
-</div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Documentation</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../Notebooks/nearest_neighbor.html">KNN Resampler</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../Notebooks/clustering.html">Cluster Resampler</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../Notebooks/copula.html">Custom Models with synloc: Using Copulas for Synthetic Data Generation</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">API</span></p>
-<ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Resamplers</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#synloc.kNNResampler"><code class="docutils literal notranslate"><span class="pre">kNNResampler</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#synloc.kNNResampler.comparePlots"><code class="docutils literal notranslate"><span class="pre">kNNResampler.comparePlots()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#synloc.kNNResampler.fit"><code class="docutils literal notranslate"><span class="pre">kNNResampler.fit()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#synloc.kNNResampler.round_integers"><code class="docutils literal notranslate"><span class="pre">kNNResampler.round_integers()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#synloc.clusterResampler"><code class="docutils literal notranslate"><span class="pre">clusterResampler</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#synloc.clusterResampler.comparePlots"><code class="docutils literal notranslate"><span class="pre">clusterResampler.comparePlots()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#synloc.clusterResampler.fit"><code class="docutils literal notranslate"><span class="pre">clusterResampler.fit()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="methods.html">Methods</a></li>
-</ul>
 
-        </div>
-      </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../index.html">Synloc</a>
-      </nav>
-
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
-  <ul class="wy-breadcrumbs">
-      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Resamplers</li>
-      <li class="wy-breadcrumbs-aside">
-      </li>
-  </ul>
-  <hr/>
-</div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-             
+          <div class="body" role="main">
+            
   <section id="resamplers">
-<h1>Resamplers<a class="headerlink" href="#resamplers" title="Link to this heading"></a></h1>
-<p>This page provides an auto-generated summary of synloc’s API.</p>
+<h1>Resamplers<a class="headerlink" href="#resamplers" title="Link to this heading">¶</a></h1>
+<p>The base resampler classes are public for users who want to provide their own
+local sampling method.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="synloc.kNNResampler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">synloc.</span></span><span class="sig-name descname"><span class="pre">kNNResampler</span></span><a class="headerlink" href="#synloc.kNNResampler" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">synloc.</span></span><span class="sig-name descname"><span class="pre">kNNResampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">K</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clipping</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Args_NearestNeighbors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/kNNResampler.html#kNNResampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.kNNResampler" title="Link to this definition">¶</a></dt>
 <dd><p>Finds the nearest neighbor of each observation and creates synthetic values by the given method.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -116,7 +59,7 @@ the synthetic point.</p></li>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="synloc.kNNResampler.comparePlots">
-<span class="sig-name descname"><span class="pre">comparePlots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#synloc.kNNResampler.comparePlots" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">comparePlots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/kNNResampler.html#kNNResampler.comparePlots"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.kNNResampler.comparePlots" title="Link to this definition">¶</a></dt>
 <dd><p>Creating plots to compare the original sample and the synthetic sample.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -129,8 +72,14 @@ the synthetic point.</p></li>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="synloc.kNNResampler.compareStats">
+<span class="sig-name descname"><span class="pre">compareStats</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/kNNResampler.html#kNNResampler.compareStats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.kNNResampler.compareStats" title="Link to this definition">¶</a></dt>
+<dd><p>Return variable-level quality metrics for the synthetic sample.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="synloc.kNNResampler.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#synloc.kNNResampler.fit" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/kNNResampler.html#kNNResampler.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.kNNResampler.fit" title="Link to this definition">¶</a></dt>
 <dd><p>Creating synthetic sample using parallel processing.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -146,8 +95,14 @@ the synthetic point.</p></li>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="synloc.kNNResampler.qualityReport">
+<span class="sig-name descname"><span class="pre">qualityReport</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/kNNResampler.html#kNNResampler.qualityReport"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.kNNResampler.qualityReport" title="Link to this definition">¶</a></dt>
+<dd><p>Return per-variable and overall quality metrics for the synthetic sample.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="synloc.kNNResampler.round_integers">
-<span class="sig-name descname"><span class="pre">round_integers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">integer_columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stochastic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#synloc.kNNResampler.round_integers" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">round_integers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">integer_columns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stochastic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/kNNResampler.html#kNNResampler.round_integers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.kNNResampler.round_integers" title="Link to this definition">¶</a></dt>
 <dd><p>Rounds variables to integers.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -156,6 +111,9 @@ the synthetic point.</p></li>
 <li><p><strong>stochastic</strong> (<em>bool</em><em>, </em><em>optional</em>) – Variables are rounded by a stochastic process, defaults to True</p></li>
 </ul>
 </dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
 </dl>
 </dd></dl>
 
@@ -163,10 +121,10 @@ the synthetic point.</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="synloc.clusterResampler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">synloc.</span></span><span class="sig-name descname"><span class="pre">clusterResampler</span></span><a class="headerlink" href="#synloc.clusterResampler" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">synloc.</span></span><span class="sig-name descname"><span class="pre">clusterResampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_clusters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clipping</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/clusterResampler.html#clusterResampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.clusterResampler" title="Link to this definition">¶</a></dt>
 <dd><p>Creating synthetic sample by clustering.</p>
-<p>This class creates subsamples from a given sample. 
-The subsamples are created by clustering the original sample and then 
+<p>This class creates subsamples from a given sample.
+The subsamples are created by clustering the original sample and then
 sampling from each cluster. The clustering is done by standard KMeans with a heuristic for size_min.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -182,7 +140,7 @@ sampling from each cluster. The clustering is done by standard KMeans with a heu
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="synloc.clusterResampler.comparePlots">
-<span class="sig-name descname"><span class="pre">comparePlots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#synloc.clusterResampler.comparePlots" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">comparePlots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/clusterResampler.html#clusterResampler.comparePlots"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.clusterResampler.comparePlots" title="Link to this definition">¶</a></dt>
 <dd><p>Creating plots to compare the original sample and the synthetic sample.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -195,8 +153,14 @@ sampling from each cluster. The clustering is done by standard KMeans with a heu
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="synloc.clusterResampler.compareStats">
+<span class="sig-name descname"><span class="pre">compareStats</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/clusterResampler.html#clusterResampler.compareStats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.clusterResampler.compareStats" title="Link to this definition">¶</a></dt>
+<dd><p>Return variable-level quality metrics for the synthetic sample.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="synloc.clusterResampler.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#synloc.clusterResampler.fit" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/clusterResampler.html#clusterResampler.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.clusterResampler.fit" title="Link to this definition">¶</a></dt>
 <dd><p>Creating synthetic sample.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -211,39 +175,98 @@ sampling from each cluster. The clustering is done by standard KMeans with a heu
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="synloc.clusterResampler.qualityReport">
+<span class="sig-name descname"><span class="pre">qualityReport</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/clusterResampler.html#clusterResampler.qualityReport"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.clusterResampler.qualityReport" title="Link to this definition">¶</a></dt>
+<dd><p>Return per-variable and overall quality metrics for the synthetic sample.</p>
+</dd></dl>
+
 </dd></dl>
 
 </section>
 
 
-           </div>
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="../Notebooks/copula.html" class="btn btn-neutral float-left" title="Custom Models with synloc: Using Copulas for Synthetic Data Generation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="methods.html" class="btn btn-neutral float-right" title="Methods" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-    </div>
-
-  <hr/>
-
-  <div role="contentinfo">
-    <p>&#169; Copyright 2022, Ali F. Kalay.</p>
-  </div>
-
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
-
-</footer>
+          
         </div>
       </div>
-    </section>
-  </div>
-  <script>
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script> 
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">synloc</a></h1>
 
-</body>
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input_requirements.html">Input requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../metrics.html">Quality metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../replication.html">Replication materials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../release_notes.html">Version 1.0 notes</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Resamplers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="methods.html">Methods</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html">Metrics and utilities</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="../api.html">API reference</a><ul>
+      <li>Previous: <a href="../api.html" title="previous chapter">API reference</a></li>
+      <li>Next: <a href="methods.html" title="next chapter">Methods</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Ali Furkan Kalay.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="../_sources/api/resamplers.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
 </html>

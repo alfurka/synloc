@@ -16,7 +16,8 @@ california_synthpop.csv
 circulars_synthpop.csv
 descriptives.tex
 trivariate_synthpop.csv
-docs_source
+docs_source/_build/
+.pytest_cache/
+pytest-cache-files-*/
 synloc-env
-notes.md
 assets/*

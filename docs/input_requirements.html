@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Input requirements &#8212; synloc 1.0.0</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=8d563738"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Usage" href="usage.html" />
+    <link rel="prev" title="Installation" href="installation.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="input-requirements">
+<h1>Input requirements<a class="headerlink" href="#input-requirements" title="Link to this heading">¶</a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">synloc</span></code> expects a numeric <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code>.</p>
+<p>Before calling a resampler, prepare the data as follows:</p>
+<ul class="simple">
+<li><p>Encode categorical variables as numeric columns, for example with
+<code class="docutils literal notranslate"><span class="pre">pandas.get_dummies</span></code>.</p></li>
+<li><p>Use one row per observation and one column per variable.</p></li>
+<li><p>Avoid duplicate column names.</p></li>
+<li><p>Avoid positive or negative infinite values.</p></li>
+<li><p>Do not pass columns that are entirely missing.</p></li>
+</ul>
+<section id="missing-values">
+<h2>Missing values<a class="headerlink" href="#missing-values" title="Link to this heading">¶</a></h2>
+<p>Numeric missing values are filled with column medians during <code class="docutils literal notranslate"><span class="pre">fit</span></code>. This is
+intended as a convenience, not as a substitute for thoughtful preprocessing.
+Columns with only missing values cannot be imputed and raise a <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>.</p>
+</section>
+<section id="dummy-variables">
+<h2>Dummy variables<a class="headerlink" href="#dummy-variables" title="Link to this heading">¶</a></h2>
+<p>Boolean dummy columns are accepted and converted to numeric <code class="docutils literal notranslate"><span class="pre">0</span></code> and <code class="docutils literal notranslate"><span class="pre">1</span></code>
+values. Other categorical columns, including strings and <code class="docutils literal notranslate"><span class="pre">object</span></code> columns,
+raise a <code class="docutils literal notranslate"><span class="pre">TypeError</span></code> with the column names that need preprocessing.</p>
+</section>
+<section id="integer-like-variables">
+<h2>Integer-like variables<a class="headerlink" href="#integer-like-variables" title="Link to this heading">¶</a></h2>
+<p>Synthetic samples are generated as continuous numeric values. If a variable
+should be integer-like, call <code class="docutils literal notranslate"><span class="pre">round_integers</span></code> after fitting:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">resampler</span><span class="o">.</span><span class="n">round_integers</span><span class="p">([</span><span class="s2">&quot;age&quot;</span><span class="p">,</span> <span class="s2">&quot;children&quot;</span><span class="p">],</span> <span class="n">stochastic</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">synloc</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Input requirements</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#missing-values">Missing values</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dummy-variables">Dummy variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#integer-like-variables">Integer-like variables</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metrics.html">Quality metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="replication.html">Replication materials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="release_notes.html">Version 1.0 notes</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="installation.html" title="previous chapter">Installation</a></li>
+      <li>Next: <a href="usage.html" title="next chapter">Usage</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Ali Furkan Kalay.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/input_requirements.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>synloc.dists &#8212; synloc 1.0.0</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../_static/documentation_options.js?v=8d563738"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for synloc.dists</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">.kNNResampler</span><span class="w"> </span><span class="kn">import</span> <span class="n">kNNResampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.clusterResampler</span><span class="w"> </span><span class="kn">import</span> <span class="n">clusterResampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">multivariate_normal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataFrame</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_regularized_covariance</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a symmetric positive covariance matrix for sampling.&quot;&quot;&quot;</span>
+    <span class="n">n_features</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">n_features</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot estimate a covariance matrix with zero columns.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">variances</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">var</span><span class="p">()</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">variances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">variances</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">variances</span><span class="p">,</span> <span class="mf">1e-12</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">variances</span><span class="p">)</span>
+
+    <span class="n">covariance</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">cov</span><span class="p">()</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">covariance</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">covariance</span><span class="p">)</span>
+    <span class="n">covariance</span> <span class="o">=</span> <span class="p">(</span><span class="n">covariance</span> <span class="o">+</span> <span class="n">covariance</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span>
+    <span class="n">scale</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="n">covariance</span><span class="p">))</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">n_features</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">covariance</span> <span class="o">=</span> <span class="n">covariance</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n_features</span><span class="p">)</span> <span class="o">*</span> <span class="n">scale</span> <span class="o">*</span> <span class="mf">1e-10</span>
+    <span class="k">return</span> <span class="n">covariance</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_local_constant_mask</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return columns that are exactly constant in this local sample.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="o">==</span> <span class="n">data</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_draw_local_normal</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Draw from local covariance while preserving locally constant columns.&quot;&quot;&quot;</span>
+    <span class="n">means</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">constant_mask</span> <span class="o">=</span> <span class="n">_local_constant_mask</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">varying_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="o">~</span><span class="n">constant_mask</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">draw</span> <span class="o">=</span> <span class="n">means</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">varying_indices</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">draw</span>
+
+        <span class="n">varying_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="n">varying_indices</span><span class="p">]</span>
+        <span class="n">covariance</span> <span class="o">=</span> <span class="n">_regularized_covariance</span><span class="p">(</span><span class="n">varying_data</span><span class="p">)</span>
+        <span class="n">varying_mean</span> <span class="o">=</span> <span class="n">means</span><span class="p">[</span><span class="n">varying_indices</span><span class="p">]</span>
+        <span class="n">varying_draw</span> <span class="o">=</span> <span class="n">multivariate_normal</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="n">varying_mean</span><span class="p">,</span> <span class="n">cov</span><span class="o">=</span><span class="n">covariance</span><span class="p">)</span>
+        <span class="n">draw</span><span class="p">[</span><span class="n">varying_indices</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">varying_draw</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">draw</span>
+
+    <span class="n">size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+    <span class="n">draws</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">means</span><span class="p">,</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">varying_indices</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">draws</span>
+
+    <span class="n">varying_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="n">varying_indices</span><span class="p">]</span>
+    <span class="n">covariance</span> <span class="o">=</span> <span class="n">_regularized_covariance</span><span class="p">(</span><span class="n">varying_data</span><span class="p">)</span>
+    <span class="n">varying_mean</span> <span class="o">=</span> <span class="n">means</span><span class="p">[</span><span class="n">varying_indices</span><span class="p">]</span>
+    <span class="n">varying_draws</span> <span class="o">=</span> <span class="n">multivariate_normal</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="n">varying_mean</span><span class="p">,</span> <span class="n">cov</span><span class="o">=</span><span class="n">covariance</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">)</span>
+    <span class="n">draws</span><span class="p">[:,</span> <span class="n">varying_indices</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">varying_draws</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">varying_indices</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">draws</span>
+
+<div class="viewcode-block" id="LocalCov">
+<a class="viewcode-back" href="../../api/methods.html#synloc.LocalCov">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LocalCov</span><span class="p">(</span><span class="n">kNNResampler</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;This is a `method` for `clusterResampler` class to create synthetic samples from the multivariate normal distribution with the estimated covariance matrix.</span>
+
+<span class="sd">    :param data: Original data set to be synthesized</span>
+<span class="sd">    :type data: pandas.DataFrame</span>
+<span class="sd">    :param K: The number of the nearest neighbors used to create synthetic samples, defaults to 30</span>
+<span class="sd">    :type K: int, optional</span>
+<span class="sd">    :param normalize: Normalize sample before defining clusters, defaults to True</span>
+<span class="sd">    :type normalize: bool, optional</span>
+<span class="sd">    :param clipping: trim values greater (smaller) than the maximum (minimum) for each variable, defaults to True</span>
+<span class="sd">    :type clipping: bool, optional</span>
+<span class="sd">    :param n_jobs: The number of jobs to run in parallel, defaults to -1</span>
+<span class="sd">    :type n_jobs: int, optional</span>
+<span class="sd">    :param Args_NearestNeighbors: `NearestNeighbors` function arguments can be specified if needed. See scikit-learn.org/stable/modules/generated/sklearn.neighbors.NearestNeighbors.html , defaults to {}</span>
+<span class="sd">    :type Args_NearestNeighbors: dict, optional</span>
+<span class="sd">    &quot;&quot;&quot;</span>    
+<div class="viewcode-block" id="LocalCov.method">
+<a class="viewcode-back" href="../../api/methods.html#synloc.LocalCov.method">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">method</span><span class="p">(</span><span class="n">subsample</span><span class="p">:</span><span class="n">DataFrame</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Estimates covariance matrix and draw samples from the estimated multivariate normal distribution.</span>
+
+<span class="sd">        :param subsample: A subsample defined by the `kNNResampler` class.</span>
+<span class="sd">        :type subsample: pandas.DataFrame</span>
+<span class="sd">        :return: Synthetic values. </span>
+<span class="sd">        :rtype: numpy.darray</span>
+<span class="sd">        &quot;&quot;&quot;</span>        
+        <span class="k">return</span> <span class="n">_draw_local_normal</span><span class="p">(</span><span class="n">subsample</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">K</span><span class="p">:</span><span class="nb">int</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">normalize</span><span class="p">:</span><span class="nb">bool</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">clipping</span><span class="p">:</span><span class="nb">bool</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">n_jobs</span><span class="p">:</span><span class="nb">int</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">Args_NearestNeighbors</span><span class="p">:</span><span class="nb">dict</span><span class="o">=</span><span class="p">{}):</span>   
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">clipping</span><span class="p">,</span> <span class="n">n_jobs</span><span class="p">,</span> <span class="n">Args_NearestNeighbors</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="clusterCov">
+<a class="viewcode-back" href="../../api/methods.html#synloc.clusterCov">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">clusterCov</span><span class="p">(</span><span class="n">clusterResampler</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;`clusterCov` is a method for `clusterResampler` class to create </span>
+<span class="sd">    synthetic values from the multivariate normal distribution </span>
+<span class="sd">    with the covariance matrix estimated from the clusters.</span>
+
+<span class="sd">    :param data: Original data set to be synthesized</span>
+<span class="sd">    :type data: pandas.DataFrame</span>
+<span class="sd">    :param n_clusters: The number of clusters, defaults to 8</span>
+<span class="sd">    :type n_clusters: int, optional</span>
+<span class="sd">    :param size_min: Required minimum cluster size, defaults to None</span>
+<span class="sd">    :type size_min: int, optional</span>
+<span class="sd">    :param normalize: Normalize sample before defining clusters, defaults to True</span>
+<span class="sd">    :type normalize: bool, optional</span>
+<span class="sd">    :param clipping: trim values greater (smaller) than the maximum (minimum) for each variable, defaults to True</span>
+<span class="sd">    :type clipping: bool, optional</span>
+<span class="sd">    &quot;&quot;&quot;</span>    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">n_clusters</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">size_min</span><span class="p">:</span><span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="p">:</span><span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">clipping</span><span class="p">:</span><span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>        
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">,</span><span class="n">n_clusters</span> <span class="o">=</span> <span class="n">n_clusters</span><span class="p">,</span> <span class="n">size_min</span> <span class="o">=</span> <span class="n">size_min</span><span class="p">,</span> <span class="n">normalize</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">clipping</span> <span class="o">=</span> <span class="n">clipping</span><span class="p">)</span>
+        
+<div class="viewcode-block" id="clusterCov.method">
+<a class="viewcode-back" href="../../api/methods.html#synloc.clusterCov.method">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cluster</span><span class="p">:</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span><span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Creating synthetic values from the estimated multivariate normal distribution. </span>
+
+<span class="sd">        :param cluster: Cluster data</span>
+<span class="sd">        :type cluster: pandas.DataFrame</span>
+<span class="sd">        :param size: Required number of synthetic observations. Size is equal to the number of observations in the cluster if not specified.</span>
+<span class="sd">        :type size: int</span>
+<span class="sd">        :return: Synthetic values</span>
+<span class="sd">        :rtype: pandas.DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>        
+        <span class="n">syn_values_np</span> <span class="o">=</span> <span class="n">_draw_local_normal</span><span class="p">(</span><span class="n">cluster</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">)</span>
+        <span class="n">syn_values</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">syn_values_np</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">cluster</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">syn_values</span></div>
+</div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">synloc</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../input_requirements.html">Input requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../metrics.html">Quality metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../replication.html">Replication materials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../release_notes.html">Version 1.0 notes</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Ali Furkan Kalay.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "synloc"
-version = "0.2.4"
+version = "1.0.0"
 authors = [
     {name = "Ali Furkan Kalay", email = "alfurka@gmail.com"},
 ]
@@ -17,6 +17,7 @@ dependencies = [
     "scipy",
     "matplotlib",
     "scikit-learn",
+    "joblib",
     "tqdm"
 ]
 
@@ -35,12 +36,28 @@ keywords = [
     "multivariate-distributions"
 ]
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent"
 ]
 license = {text = "MIT"}
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "sphinx",
+]
+docs = [
+    "sphinx",
+]
 
 [project.urls]
 Homepage = "https://github.com/alfurka/synloc"

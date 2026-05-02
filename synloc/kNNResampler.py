@@ -1,8 +1,16 @@
-from .tools import fill_na_with_median, compareplots, stochastic_rounder, compute_k_distances
+from .tools import (
+    compareStats,
+    compareplots,
+    fill_na_with_median,
+    quality_report,
+    stochastic_rounder,
+    compute_k_distances,
+    validate_numeric_dataframe,
+)
 from sklearn.neighbors import NearestNeighbors
 from pandas import DataFrame
 import pandas as pd # Import pandas explicitly for DataFrame creation
-from numpy import diag, sqrt, cov, random, concatenate, arange, array, vstack
+from numpy import sqrt, random, arange, vstack
 from tqdm import tqdm
 # Import joblib for parallel processing
 from joblib import Parallel, delayed
@@ -48,21 +56,34 @@ class kNNResampler(object):
         Initialize kNNResampler.
         :param random_state: Optional random seed for reproducibility.
         """
-        self.data = data.copy().reset_index(drop = True)
+        self.data = validate_numeric_dataframe(data)
         self.method = method
         self.K = K
-        # assert that K must be greater tha n1
-        if self.K < 1:
+        if not isinstance(self.K, int) or self.K < 1:
             raise ValueError("K must be greater than or equal to 1")
         self.normalize = normalize
-        self.Args_NearestNeighbors = Args_NearestNeighbors
+        self.Args_NearestNeighbors = dict(Args_NearestNeighbors)
         self.clipping = clipping
-        self.n_jobs = multiprocessing.cpu_count() if n_jobs == -1 else n_jobs
+        self.n_jobs = self._resolve_n_jobs(n_jobs)
         self.fitted = False
         self.synthetic = None # Initialize synthetic attribute
         self._data_min = None # Store min/max for clipping
         self._data_max = None
         self.random_state = random_state
+        self.metrics = None
+
+    @staticmethod
+    def _resolve_n_jobs(n_jobs):
+        if not isinstance(n_jobs, int):
+            raise TypeError("n_jobs must be an integer.")
+        cpu_count = multiprocessing.cpu_count()
+        if n_jobs == 0:
+            raise ValueError("n_jobs cannot be 0.")
+        if n_jobs == -1:
+            return cpu_count
+        if n_jobs < -1:
+            return max(1, cpu_count + 1 + n_jobs)
+        return n_jobs
 
     def fit(self, sample_size = None) -> DataFrame:
         """Creating synthetic sample using parallel processing.
@@ -72,13 +93,6 @@ class kNNResampler(object):
         :return: Returns the synthetic sample
         :rtype: pandas.DataFrame
         """
-        # Store parameters that will be needed in parallel processing
-        if not hasattr(self, '_processing_params'):
-            self._processing_params = {
-                'method': self.method,
-                'n_jobs': self.n_jobs if self.n_jobs != -1 else max(1, multiprocessing.cpu_count() // 2)  # Use half of available cores
-            }
-
         ### Assertations
         if sample_size is not None:
             if not isinstance(sample_size, int) or sample_size <= 0:
@@ -94,13 +108,12 @@ class kNNResampler(object):
         if current_data.isna().any().any():
             print('The original sample has missing values. Missing values are replaced with variable medians.')
             # Ensure fill_na_with_median returns a DataFrame
-            current_data = fill_na_with_median(current_data)
-            # Update self.data only if imputation happened and it's the first fit?
-            # Or maybe always work with the imputed version within fit? Let's use the imputed version.
+            current_data = fill_na_with_median(current_data, show_message=False)
+            self.data = current_data.copy()
 
         ### Normalizing data set
         if self.normalize:
-            variances = current_data.var()
+            variances = current_data.var().fillna(0.0)
             if (variances == 0).any():
                 print("Warning: Some columns are constant and will not be scaled.")
             variances[variances == 0] = 1
@@ -130,39 +143,46 @@ class kNNResampler(object):
         if k_neighbors_count == 1:
             neighbors_indices = arange(n_original).reshape(-1, 1)
         else:
-            nn_to_find = k_neighbors_count - 1
-            NNfit = NearestNeighbors(n_neighbors=nn_to_find, **self.Args_NearestNeighbors).fit(dataN)
+            nn_args = dict(self.Args_NearestNeighbors)
+            nn_args.pop("n_neighbors", None)
+            NNfit = NearestNeighbors(n_neighbors=k_neighbors_count, **nn_args).fit(dataN)
             neighbors_indices = NNfit.kneighbors(dataN, return_distance=False)
-            
-            if neighbors_indices.shape[1] < k_neighbors_count:
-                diff = k_neighbors_count - neighbors_indices.shape[1]
-                padding = neighbors_indices[:, -1].reshape(-1,1)
-                for _ in range(diff):
-                    neighbors_indices = concatenate((neighbors_indices, padding), axis=1)
-            neighbors_indices = neighbors_indices[:, :k_neighbors_count]
 
         ### Synthesizing using parallel processing
-        print(f"Generating {actual_sample_size} synthetic samples using {self._processing_params['n_jobs']} cores...")
+        print(f"Generating {actual_sample_size} synthetic samples using {self.n_jobs} cores...")
         
         # Process in batches to reduce DLL loading overhead
-        batch_size = max(1, actual_sample_size // self._processing_params['n_jobs'])
+        batch_size = max(1, actual_sample_size // self.n_jobs)
         batches = [selected_indices[i:i + batch_size] for i in range(0, len(selected_indices), batch_size)]
 
         results_list = []
         try:
             with tqdm(total=actual_sample_size, desc="Generating synthetic samples") as pbar:
-                with Parallel(n_jobs=self._processing_params['n_jobs'], prefer="processes") as parallel:
+                if self.n_jobs == 1:
                     for batch in batches:
-                        batch_results = parallel(
-                            delayed(_generate_one_synthetic_point)(
+                        batch_results = [
+                            _generate_one_synthetic_point(
                                 idx,
                                 current_data,
                                 neighbors_indices,
-                                self._processing_params['method']
+                                self.method
                             ) for idx in batch
-                        )
+                        ]
                         results_list.extend(batch_results)
                         pbar.update(len(batch_results))
+                else:
+                    with Parallel(n_jobs=self.n_jobs, prefer="processes") as parallel:
+                        for batch in batches:
+                            batch_results = parallel(
+                                delayed(_generate_one_synthetic_point)(
+                                    idx,
+                                    current_data,
+                                    neighbors_indices,
+                                    self.method
+                                ) for idx in batch
+                            )
+                            results_list.extend(batch_results)
+                            pbar.update(len(batch_results))
         except Exception as e:
             raise RuntimeError(f"Parallel synthetic sample generation failed: {e}")
 
@@ -197,6 +217,7 @@ class kNNResampler(object):
         else:
             syntheticN = self.synthetic.copy()
         self.synthetic_distances = compute_k_distances(syntheticN, K=self.K)
+        self.metrics = quality_report(current_data, self.synthetic)
 
         self.fitted = True
         print("Synthetic sample generation complete.")
@@ -215,6 +236,20 @@ class kNNResampler(object):
             return
         # Compare using the original data passed to __init__
         compareplots(self.data, self.synthetic, variable = variable_list, fig_size = fig_size)
+
+    def compareStats(self):
+        """Return variable-level quality metrics for the synthetic sample."""
+        if not self.fitted or self.synthetic is None:
+            print("Model not fitted yet or synthetic data not generated. Call fit() first.")
+            return None
+        return compareStats(self.data, self.synthetic)
+
+    def qualityReport(self):
+        """Return per-variable and overall quality metrics for the synthetic sample."""
+        if not self.fitted or self.synthetic is None:
+            print("Model not fitted yet or synthetic data not generated. Call fit() first.")
+            return None
+        return quality_report(self.data, self.synthetic)
 
     def round_integers(self, integer_columns:list, stochastic:bool = True) -> None:
         """Rounds variables to integers. 

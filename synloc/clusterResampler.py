@@ -1,6 +1,14 @@
-from .tools import fill_na_with_median, compareplots, new_cluster_sizes, compute_k_distances
+from .tools import (
+    compareStats,
+    compareplots,
+    fill_na_with_median,
+    quality_report,
+    new_cluster_sizes,
+    compute_k_distances,
+    validate_numeric_dataframe,
+)
 from pandas import DataFrame, Series, concat
-from numpy import diag, sqrt, cov
+from numpy import sqrt
 import numpy as np
 from sklearn.cluster import KMeans
 
@@ -26,13 +34,20 @@ class clusterResampler(object):
     """
     def __init__ (self, data:DataFrame, method, n_clusters=8, size_min = None, normalize:bool = True, clipping:bool = True) -> None: 
 
-        self.data = data.reset_index(drop = True)
+        self.data = validate_numeric_dataframe(data)
         self.method = method
         self.size_min = size_min
+        if size_min is not None and (not isinstance(size_min, int) or size_min <= 0):
+            raise ValueError("size_min must be a positive integer or None.")
+        if not isinstance(n_clusters, int) or n_clusters <= 0:
+            raise ValueError("n_clusters must be a positive integer.")
         self.n_clusters = n_clusters
         self.normalize = normalize
         self.clipping = clipping
         self.fitted = False
+        self.synthetic = None
+        self.metrics = None
+
     def fit(self, sample_size = None) -> DataFrame:
         """Creating synthetic sample.
 
@@ -43,28 +58,41 @@ class clusterResampler(object):
         """        
         ### Assertations
         if sample_size is not None:
-            assert type(sample_size) is int
-            assert sample_size > 0
+            if not isinstance(sample_size, int) or sample_size <= 0:
+                raise ValueError("sample_size must be a positive integer")
 
         ### Checking/Imputing missing values 
 
-        if self.data.isna().any().any():
+        current_data = self.data.copy()
+        if current_data.isna().any().any():
             print('The original sample has missing values. Missing values are replaced with variable medians.')
-            self.data = fill_na_with_median(self.data)
+            current_data = fill_na_with_median(current_data, show_message=False)
+            self.data = current_data.copy()
 
         ### Normalizing data set
 
         if self.normalize:
-            varMatrix = diag(cov(self.data.T)).copy()
-            varMatrix[varMatrix==0] = 1 # don't do normalization if the variance is zero.
-            dataN = self.data / sqrt(varMatrix)
+            variances = current_data.var().fillna(0.0)
+            variances[variances == 0] = 1 # don't do normalization if the variance is zero.
+            dataN = current_data / sqrt(variances)
         else: 
-            dataN = self.data 
+            dataN = current_data.copy()
         # dataN is the normalized sample to calculate distances - if normalize == True.
 
         
         ### Find clusters (Heuristic for size_min)
-        kmeans = KMeans(n_clusters=self.n_clusters, random_state=0)
+        n_original = current_data.shape[0]
+        if self.size_min is not None and self.size_min > n_original:
+            raise ValueError("size_min cannot be greater than the number of rows.")
+
+        effective_n_clusters = min(self.n_clusters, n_original)
+        if effective_n_clusters < self.n_clusters:
+            print(
+                f"Warning: n_clusters={self.n_clusters} is greater than the number "
+                f"of data points ({n_original}). Setting n_clusters to {effective_n_clusters}."
+            )
+
+        kmeans = KMeans(n_clusters=effective_n_clusters, random_state=0, n_init=10)
         labels = kmeans.fit_predict(dataN)
 
         # Heuristic: enforce size_min by reassigning points from small clusters
@@ -73,10 +101,14 @@ class clusterResampler(object):
             cluster_sizes = Series(labels).value_counts()
             small_clusters = cluster_sizes[cluster_sizes < self.size_min].index.tolist()
             large_clusters = cluster_sizes[cluster_sizes >= self.size_min].index.tolist()
+            if not large_clusters and not cluster_sizes.empty:
+                large_clusters = [int(cluster_sizes.idxmax())]
             if small_clusters:
                 # Precompute cluster centers for large clusters
                 centers = kmeans.cluster_centers_
                 for sc in small_clusters:
+                    if sc in large_clusters:
+                        continue
                     idxs = (labels == sc).nonzero()[0]
                     for idx in idxs:
                         # Find nearest large cluster center
@@ -94,22 +126,32 @@ class clusterResampler(object):
 
         syn_samples = []
         for i in cluster_sizes.index:
-            syn_samples.append(self.method(self.data[labels == i], cluster_sizes[i]))
+            target_size = int(cluster_sizes.loc[i])
+            if target_size <= 0:
+                continue
+            cluster_data = current_data[labels == i]
+            if cluster_data.shape[0] == 0:
+                continue
+            syn_samples.append(self.method(cluster_data, target_size))
 
-        self.synthetic = concat(syn_samples, axis=0)
+        if not syn_samples:
+            raise ValueError("Synthetic sample generation failed because no non-empty clusters were available.")
+
+        self.synthetic = concat(syn_samples, axis=0, ignore_index=True)
         ### Clipping
         if self.clipping:
-            self.synthetic = self.synthetic.clip(lower=self.data.min(), upper=self.data.max(), axis=1)
+            self.synthetic = self.synthetic.clip(lower=current_data.min(), upper=current_data.max(), axis=1)
 
         # Use the same normalization as above
         
         self.data_distances = compute_k_distances(dataN, K=self.size_min)
         # For synthetic, normalize using the same varMatrix if normalization was applied
         if self.normalize:
-            syntheticN = self.synthetic / sqrt(varMatrix)
+            syntheticN = self.synthetic / sqrt(variances)
         else:
             syntheticN = self.synthetic.copy()
         self.synthetic_distances = compute_k_distances(syntheticN, K=self.size_min)
+        self.metrics = quality_report(current_data, self.synthetic)
 
         self.fitted = True
         return self.synthetic
@@ -122,4 +164,21 @@ class clusterResampler(object):
         :param fig_size: The figure size can be adjusted, defaults to None
         :type fig_size: tuple, optional
         """        
+        if not self.fitted or self.synthetic is None:
+            print("Model not fitted yet or synthetic data not generated. Call fit() first.")
+            return
         compareplots(self.data, self.synthetic, variable = variable_list, fig_size = fig_size)
+
+    def compareStats(self):
+        """Return variable-level quality metrics for the synthetic sample."""
+        if not self.fitted or self.synthetic is None:
+            print("Model not fitted yet or synthetic data not generated. Call fit() first.")
+            return None
+        return compareStats(self.data, self.synthetic)
+
+    def qualityReport(self):
+        """Return per-variable and overall quality metrics for the synthetic sample."""
+        if not self.fitted or self.synthetic is None:
+            print("Model not fitted yet or synthetic data not generated. Call fit() first.")
+            return None
+        return quality_report(self.data, self.synthetic)

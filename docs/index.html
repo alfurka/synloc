@@ -1,164 +1,188 @@
-
-
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" data-content_root="./">
-<head>
-  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome to synloc’s documentation! &mdash; Synloc 0.1.2 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  
-      <script src="_static/jquery.js?v=5d32c60e"></script>
-      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=e5353d3f"></script>
-      <script src="_static/doctools.js?v=9bcbadda"></script>
-      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
-      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <script src="_static/js/theme.js"></script>
+    <title>synloc documentation &#8212; synloc 1.0.0</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=8d563738"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="KNN Resampler" href="Notebooks/nearest_neighbor.html" /> 
-</head>
+    <link rel="next" title="Installation" href="installation.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
 
-<body class="wy-body-for-nav"> 
-  <div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
+  
+  
 
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
           
-          
-          <a href="#" class="icon icon-home">
-            Synloc
-          </a>
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
-</div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Documentation</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="Notebooks/nearest_neighbor.html">KNN Resampler</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Notebooks/clustering.html">Cluster Resampler</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Notebooks/copula.html">Custom Models with synloc: Using Copulas for Synthetic Data Generation</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">API</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="api/resamplers.html">Resamplers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/methods.html">Methods</a></li>
-</ul>
 
-        </div>
-      </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="#">Synloc</a>
-      </nav>
-
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
-  <ul class="wy-breadcrumbs">
-      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Welcome to synloc’s documentation!</li>
-      <li class="wy-breadcrumbs-aside">
-      </li>
-  </ul>
-  <hr/>
-</div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-             
-  <section id="welcome-to-synloc-s-documentation">
-<h1>Welcome to synloc’s documentation!<a class="headerlink" href="#welcome-to-synloc-s-documentation" title="Link to this heading"></a></h1>
-<img alt="synloc" class="align-center" src="https://raw.githubusercontent.com/alfurka/synloc/main/assets/logo.png" />
-<p><code class="docutils literal notranslate"><span class="pre">synloc</span></code> is an algorithm to sequentially and locally estimate distributions to create synthetic versions of a tabular data. The proposed methodology can be combined with parametric and nonparametric distributions.</p>
-<section id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">synloc</span></code> can be installed through pip:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="n">pip</span> <span class="n">install</span> <span class="n">synloc</span>
-</pre></div>
-</div>
-</section>
-<section id="a-quick-example">
-<h2>A Quick Example<a class="headerlink" href="#a-quick-example" title="Link to this heading"></a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="kn">from</span><span class="w"> </span><span class="nn">synloc.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">sample_trivariate_xyz</span>
-<span class="linenos">2</span><span class="kn">from</span><span class="w"> </span><span class="nn">synloc</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocalCov</span>
-<span class="linenos">3</span><span class="n">data</span> <span class="o">=</span> <span class="n">sample_trivariate_xyz</span><span class="p">()</span> <span class="c1"># Generates a sample with size 1000 by default.</span>
-<span class="linenos">4</span><span class="n">resampler</span> <span class="o">=</span> <span class="n">LocalCov</span><span class="p">(</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">,</span> <span class="n">K</span> <span class="o">=</span> <span class="mi">30</span><span class="p">)</span>
-<span class="linenos">5</span><span class="n">syn_data</span> <span class="o">=</span> <span class="n">resampler</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span> <span class="c1"># data is saved to `syn_data`</span>
-<span class="linenos">6</span><span class="n">resampler</span><span class="o">.</span><span class="n">comparePlots</span><span class="p">([</span><span class="s1">&#39;x&#39;</span><span class="p">,</span><span class="s1">&#39;y&#39;</span><span class="p">,</span><span class="s1">&#39;z&#39;</span><span class="p">])</span>
-</pre></div>
-</div>
-<img alt="synloc" class="align-center" src="https://raw.githubusercontent.com/alfurka/synloc/main/assets/README_7_0.png" />
-</section>
-<section id="documentation">
-<h2>Documentation<a class="headerlink" href="#documentation" title="Link to this heading"></a></h2>
+          <div class="body" role="main">
+            
+  <section id="synloc-documentation">
+<h1>synloc documentation<a class="headerlink" href="#synloc-documentation" title="Link to this heading">¶</a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">synloc</span></code> implements the Local Resampler algorithm for creating synthetic
+numeric tabular data from locally estimated distributions.</p>
+<p>The public API is intentionally small:</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="Notebooks/nearest_neighbor.html"><span class="doc">KNN Resampler</span></a></p></li>
-<li><p><a class="reference internal" href="Notebooks/clustering.html"><span class="doc">Cluster Resampler</span></a></p></li>
-<li><p><a class="reference internal" href="Notebooks/copula.html"><span class="doc">Custom Models with synloc: Using Copulas for Synthetic Data Generation</span></a></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">LocalCov</span></code> uses nearest-neighbor neighborhoods.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">clusterCov</span></code> uses KMeans clusters.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">compareStats</span></code> and <code class="docutils literal notranslate"><span class="pre">quality_report</span></code> summarize utility diagnostics.</p></li>
 </ul>
+<p>Version 1.0 keeps the existing constructor and method names while adding
+clearer input checks, quality metrics, tests, and release documentation.</p>
 <div class="toctree-wrapper compound">
-</div>
-</section>
-<section id="api">
-<h2>API<a class="headerlink" href="#api" title="Link to this heading"></a></h2>
-<ul class="simple">
-<li><p><a class="reference internal" href="api/resamplers.html"><span class="doc">Resamplers</span></a></p></li>
-<li><p><a class="reference internal" href="api/methods.html"><span class="doc">Methods</span></a></p></li>
+<p class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#documentation-builds">Documentation builds</a></li>
 </ul>
-<div class="toctree-wrapper compound">
+</li>
+<li class="toctree-l1"><a class="reference internal" href="input_requirements.html">Input requirements</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="input_requirements.html#missing-values">Missing values</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input_requirements.html#dummy-variables">Dummy variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input_requirements.html#integer-like-variables">Integer-like variables</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#nearest-neighbor-resampling">Nearest-neighbor resampling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#cluster-resampling">Cluster resampling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#visualization">Visualization</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="metrics.html">Quality metrics</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html#per-variable-statistics">Per-variable statistics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html#overall-report">Overall report</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html#function-api">Function API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html#interpreting-metrics">Interpreting metrics</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="replication.html">Replication materials</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="replication.html#reproducibility-notes">Reproducibility notes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="release_notes.html">Version 1.0 notes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="release_notes.html#highlights">Highlights</a></li>
+<li class="toctree-l2"><a class="reference internal" href="release_notes.html#recommended-release-checklist">Recommended release checklist</a></li>
+</ul>
+</li>
+</ul>
 </div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/resamplers.html">Resamplers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/methods.html">Methods</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/metrics.html">Metrics and utilities</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<section id="citation">
+<h2>Citation<a class="headerlink" href="#citation" title="Link to this heading">¶</a></h2>
+<p>If you use <code class="docutils literal notranslate"><span class="pre">synloc</span></code> in research, please cite:</p>
+<p>Kalay, A. F. (2026). <em>Generating Synthetic Data With Locally Estimated
+Distributions for Disclosure Control</em>. Australian &amp; New Zealand Journal of
+Statistics. <a class="reference external" href="https://doi.org/10.1111/anzs.70032">https://doi.org/10.1111/anzs.70032</a></p>
 </section>
-</section>
-<section id="indices-and-tables">
-<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading"></a></h1>
+<section id="indices">
+<h2>Indices<a class="headerlink" href="#indices" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
 <li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
 <li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
 </ul>
 </section>
+</section>
 
 
-           </div>
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="Notebooks/nearest_neighbor.html" class="btn btn-neutral float-right" title="KNN Resampler" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-    </div>
-
-  <hr/>
-
-  <div role="contentinfo">
-    <p>&#169; Copyright 2022, Ali F. Kalay.</p>
-  </div>
-
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
-
-</footer>
+          
         </div>
       </div>
-    </section>
-  </div>
-  <script>
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script> 
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">synloc</a></h1>
 
-</body>
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="input_requirements.html">Input requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metrics.html">Quality metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="replication.html">Replication materials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="release_notes.html">Version 1.0 notes</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="installation.html" title="next chapter">Installation</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Ali Furkan Kalay.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
 </html>

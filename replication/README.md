@@ -2,9 +2,9 @@
 
 This folder contains the replication materials for:
 
-**Kalay, A. F. (2025).** *Generating Synthetic Data With Locally Estimated Distributions for Disclosure Control.* Australian & New Zealand Journal of Statistics. [https://doi.org/10.1111/anzs.70032](https://doi.org/10.1111/anzs.70032)
+**Kalay, A. F. (2026).** *Generating Synthetic Data With Locally Estimated Distributions for Disclosure Control.* Australian & New Zealand Journal of Statistics. [https://doi.org/10.1111/anzs.70032](https://doi.org/10.1111/anzs.70032)
 
-Feel free to contact me if you have any questions. Comments and feedback on my work are more than welcome!
+The notebook is intended to reproduce the tables, simulations, and figures reported in the paper. Because several comparison methods changed their APIs after the analysis was completed, the safest route is to use the package versions printed in the notebook output.
 
 ---
 
@@ -12,7 +12,7 @@ Feel free to contact me if you have any questions. Comments and feedback on my w
 
 **[Replication Notebook.ipynb](Replication%20Notebook.ipynb)**
 
-This Jupyter notebook is the primary replication file for the paper. It contains all simulations, analyses, and figures.
+This Jupyter notebook is the primary replication file for the paper. It contains the simulations, analyses, and figures. Some intermediate CSV files are retained because parts of the comparison workflow involve nested randomness that could not be fully controlled by a single random seed.
 
 ---
 
@@ -49,7 +49,7 @@ The [`anonymeter/`](anonymeter/) folder contains a **modified fork** of the [sta
 This package is used for **singling out risk computation**. Note that this is not a central metric to the paper, but is included for completeness.
 
 > [!NOTE]  
-> You may not be able to install all required packages via `pip` due to this conflict. If package resolution fails, use the modified `anonymeter` version provided here alongside the exact package versions from the notebook.
+> You may not be able to install all required packages via `pip` due to this conflict. If package resolution fails, use the modified `anonymeter` version provided here alongside the exact package versions printed in the notebook.
 
 ### R (for `synthpop`)
 
@@ -65,7 +65,7 @@ library(synthpop)
 
 ## Intermediate Datasets
 
-The following CSV files are **intermediate datasets** generated during simulations. These are preserved because the simulations involve nested randomness that could not be fully controlled with a random seed.
+The following CSV files are **intermediate datasets** generated during simulations. These are preserved so that paper outputs can be checked without rerunning every stochastic comparison model.
 
 | File | Description |
 |------|-------------|
@@ -82,6 +82,6 @@ The following CSV files are **intermediate datasets** generated during simulatio
 
 ## Notes
 
-- Random seed is set to `42` following computer science convention
+- Random seed is set to `42`
 - The notebook outputs exact package versions for full reproducibility
 - If you encounter issues, please refer to the exact versions listed in the notebook output
