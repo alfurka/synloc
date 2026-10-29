@@ -2,6 +2,11 @@
 
 This experiment prepares a balanced working-age panel from the public 2018 SIPP release (reference year **2017**) and evaluates parameter-only `clusterCov` models. The eight model features are four quarterly earnings sums and four quarterly means of monthly average weekly-hours rates, in original units. The experiment is unweighted and does not establish privacy clearance for confidential data.
 
+**Superseded empirical design:** this two-variable run is a software and
+failure-mode baseline, not general-purpose panel validation. See the
+[14-variable experiment](multivariable/RESULTS.md) for the current design and
+its substantial mixed-type, transition and inference failures.
+
 **Executed results:** [29 October 2026 findings](RESULTS.md), with 37,552 people,
 12 configurations, 120 synthetic panels, and aggregate evidence in `summary/`.
 The export round trips work, but negative hours and lost zero masses are material

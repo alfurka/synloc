@@ -128,6 +128,14 @@ The existing `fit()` workflow remains available.
 See [the public SIPP panel experiment](replication/model_export/README.md) for
 data preparation, commands, evaluation definitions, and limitations.
 
+For mixed categorical and numeric panels, see the separate
+[`MixedClusterCovModel` format](docs_source/mixed_cluster.rst) and the
+[multivariable SIPP experiment](replication/model_export/multivariable/RESULTS.md).
+Public category codes and labels and deterministic decoding are included in the
+mixed archive; this does not make decoded data realistic or privacy-safe.
+The first experiment finds material distortions in zero masses, transitions,
+several regression coefficients and standard errors.
+
 ## How to cite?
 
 If you use `synloc` in your research, please cite the following paper:

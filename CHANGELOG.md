@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased multivariable panel] - 2026-10-29
+### Added
+- Added versioned `MixedClusterCovModel`/`MixedClusterCovSampler` with fixed public category codes and labels, bounded deterministic decoding, documented intervention diagnostics and independent pickle-free loading; existing numeric-only formats remain unchanged.
+- Added reproducible SIPP preparation and evaluation with 14 substantive variables, 41 wide features and 113 encoded dimensions, including Census sex, baseline age, additional characteristics and nine quarterly measures.
+- Added multivariable pooled, person fixed-effects and positive-earnings analyses, subgroup and transition diagnostics, household-clustered original sensitivity, preregistered quality gates and aggregate evidence.
+
+### Findings and limitations
+- The first 36,638-person, ten-replicate experiment passes the contributor-count gate and round trip but fails quality gates for zeros, transitions, 25/54 coefficient checks and all six selected FE standard errors; a wider grid was not run.
+- Public-use research exports do not establish privacy clearance; Gaussian decoding does not ensure plausible zero-heavy, categorical or household trajectories, and synthetic CR0 SEs do not include synthesis uncertainty.
+
 ## [Unreleased] - 2026-10-29
 ### Added
 - Added `clusterCov.fit_model()`, parameter-only sampling, versioned NPZ export, and independent `ClusterCovSampler` loading.
