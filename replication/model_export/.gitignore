@@ -1,8 +1,0 @@
-# Public source copies and generated person-level/model data are not source.
-prepared/
-results/
-*.csv
-*.csv.gz
-*.npz
-metadata.json
-!summary/*.csv

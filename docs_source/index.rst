@@ -20,7 +20,6 @@ clearer input checks, quality metrics, tests, and release documentation.
    installation
    input_requirements
    usage
-   mixed_cluster
    metrics
    replication
    release_notes

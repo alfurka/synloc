@@ -101,41 +101,6 @@ print(variable_metrics[["ks_statistic", "wasserstein_distance"]])
 print(quality["overall"])
 ```
 
-## Exporting a fitted cluster model
-
-`clusterCov` can fit reusable mixture parameters separately from synthetic
-generation. Clustering may use variance scaling, but the exported Gaussian
-means and covariances are in the original variable units.
-
-```python
-from synloc import clusterCov, ClusterCovSampler
-
-model = clusterCov(data, n_clusters=20, size_min=50, clipping=False).fit_model()
-report = model.clearance_report()  # internal evidence; not a privacy certificate
-# For public-data research only, explicitly acknowledge unresolved review:
-model.export_model("mixture.npz", reviewed=True)
-sampler = ClusterCovSampler.load("mixture.npz")
-synthetic = sampler.sample(1000, random_state=123)
-```
-
-The export contains versioned numeric mixture parameters and column names, not
-source rows, cluster memberships, original extrema, or a pickled estimator.
-The external sampler does not clip to confidential extrema. `reviewed=True`
-acknowledges unresolved disclosure risks; it does not establish regulatory
-approval or differential privacy. Contributor checks assume one person per row.
-The existing `fit()` workflow remains available.
-
-See [the public SIPP panel experiment](replication/model_export/README.md) for
-data preparation, commands, evaluation definitions, and limitations.
-
-For mixed categorical and numeric panels, see the separate
-[`MixedClusterCovModel` format](docs_source/mixed_cluster.rst) and the
-[multivariable SIPP experiment](replication/model_export/multivariable/RESULTS.md).
-Public category codes and labels and deterministic decoding are included in the
-mixed archive; this does not make decoded data realistic or privacy-safe.
-The first experiment finds material distortions in zero masses, transitions,
-several regression coefficients and standard errors.
-
 ## How to cite?
 
 If you use `synloc` in your research, please cite the following paper:

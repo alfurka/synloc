@@ -21,4 +21,3 @@ docs_source/_build/
 pytest-cache-files-*/
 synloc-env
 assets/*
-.venv/
