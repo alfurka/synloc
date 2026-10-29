@@ -1,6 +1,7 @@
 from .kNNResampler import kNNResampler
 from .clusterResampler import clusterResampler
 from .dists import LocalCov, clusterCov
+from .clusterCovSampler import ClusterCovSampler
 from .tools import (
     compareStats,
     compute_k_distances,

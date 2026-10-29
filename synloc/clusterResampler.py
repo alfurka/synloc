@@ -48,20 +48,8 @@ class clusterResampler(object):
         self.synthetic = None
         self.metrics = None
 
-    def fit(self, sample_size = None) -> DataFrame:
-        """Creating synthetic sample.
-
-        :param sample_size: Required minimum size. The synthetic sample size will be the cluster size if not specified., defaults to None
-        :type sample_size: int, optional
-        :return: Returns the synthetic sample
-        :rtype: pandas.DataFrame
-        """        
-        ### Assertations
-        if sample_size is not None:
-            if not isinstance(sample_size, int) or sample_size <= 0:
-                raise ValueError("sample_size must be a positive integer")
-
-        ### Checking/Imputing missing values 
+    def _cluster_data(self):
+        """Prepare data and final memberships shared by both fitting workflows."""
 
         current_data = self.data.copy()
         if current_data.isna().any().any():
@@ -120,6 +108,21 @@ class clusterResampler(object):
                 cluster_sizes = Series(labels).value_counts()
         else:
             cluster_sizes = Series(labels).value_counts()
+
+        return current_data, dataN, variances if self.normalize else None, labels, cluster_sizes
+
+    def fit(self, sample_size=None) -> DataFrame:
+        """Create synthetic data, retaining legacy clipping and diagnostics.
+
+        :param sample_size: Requested sample size, or the original row count.
+        :return: The synthetic sample.
+        :rtype: pandas.DataFrame
+        """
+        if sample_size is not None:
+            if not isinstance(sample_size, int) or sample_size <= 0:
+                raise ValueError("sample_size must be a positive integer")
+
+        current_data, dataN, variances, labels, cluster_sizes = self._cluster_data()
 
         if sample_size is not None:
             cluster_sizes = new_cluster_sizes(cluster_sizes, sample_size)

@@ -1,0 +1,42 @@
+{
+  "input_sha256": "3386e73936b6db2e1c6865e223c82a9d3ce2a12c88ecbe3213ededb69f4b24b4",
+  "people": 37552,
+  "quarters": 4,
+  "columns": [
+    "earnings_q1",
+    "earnings_q2",
+    "earnings_q3",
+    "earnings_q4",
+    "hours_q1",
+    "hours_q2",
+    "hours_q3",
+    "hours_q4"
+  ],
+  "clusters": [
+    20,
+    50,
+    100
+  ],
+  "minimum_sizes": [
+    0,
+    10,
+    50,
+    100
+  ],
+  "replicates": 10,
+  "seed": 20261029,
+  "threads": 2,
+  "python": "3.14.8 (main, Oct 13 2026, 10:43:33) [GCC 16.2.1 20260810]",
+  "packages": {
+    "synloc": "1.0.0",
+    "numpy": "2.5.4",
+    "pandas": "3.1.0",
+    "scipy": "1.18.1",
+    "scikit-learn": "1.9.1",
+    "matplotlib": "3.11.2"
+  },
+  "clipping": false,
+  "transformations": "None; variance scaling for clustering only; moments exported in original units",
+  "uncertainty": "SD across independent synthetic draws conditional on each fitted model; regression SE is person-clustered CR0, not synthesis-adjusted",
+  "privacy_approved": false
+}
