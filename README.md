@@ -34,13 +34,13 @@ This implementation aligns with statistical agencies' safe data regulations, inc
 
 ## Data Requirements
 
-`synloc` expects a numeric `pandas.DataFrame`.
+`synloc` expects a real numeric `pandas.DataFrame`; complex-valued data are rejected.
 
 - Categorical variables must be encoded before synthesis, for example with `pandas.get_dummies`.
 - Boolean dummy variables are accepted and converted to `0`/`1`.
 - Missing numeric values are filled with column medians during fitting.
 - Columns with only missing values, duplicate column names, infinite values, and non-numeric columns raise clear errors.
-- Integer-like variables can be rounded after synthesis with `round_integers`.
+- For kNN resamplers, integer-like variables can be rounded after synthesis with `round_integers`. For `clusterCov`, round the returned DataFrame explicitly.
 
 ## Installation
 
@@ -49,6 +49,18 @@ This implementation aligns with statistical agencies' safe data regulations, inc
 ```
 pip install synloc
 ```
+
+For the GitHub source version documented here, including model export:
+
+```bash
+python -m pip install "git+https://github.com/alfurka/synloc.git@main"
+```
+
+Version 1.1.0 retains the basic `LocalCov(...).fit()` and
+`clusterCov(...).fit()` calls. For reproducible kNN fitting across worker counts,
+pass an integer `random_state` to `LocalCov`; omitting it retains the legacy RNG
+behaviour. Export preparation and exported-model sampling take separate seeds.
+See the [release notes](docs_source/release_notes.rst) for compatibility details.
 
 ## A Quick Example
 
@@ -100,6 +112,72 @@ quality = resampler.qualityReport()
 print(variable_metrics[["ks_statistic", "wasserstein_distance"]])
 print(quality["overall"])
 ```
+
+## Distance options
+
+`LocalCov` and `clusterCov` use Euclidean distance and `normalize=True` by
+default. Each nonconstant variable is divided by its sample standard deviation
+for selecting neighbours or clusters; set `normalize=False` to omit this scaling.
+Nearest-neighbour calls may specify a different metric through
+`Args_NearestNeighbors`. Fitted local distributions and exported mixture
+means/covariances remain in original units.
+
+## Exporting a fitted cluster model
+
+`clusterCov` can fit reusable mixture parameters separately from synthetic
+generation. Clustering may use variance scaling, but the exported Gaussian
+means and covariances are in the original variable units.
+
+```python
+from synloc import clusterCov, ClusterCovSampler
+
+model = clusterCov(data, n_clusters=20, size_min=50, clipping=False).fit_model()
+report = model.clearance_report()  # internal evidence; not a privacy certificate
+# For public-data research only, explicitly acknowledge unresolved review:
+model.export_model("mixture.npz", reviewed=True)
+sampler = ClusterCovSampler.load("mixture.npz")
+synthetic = sampler.sample(1000, random_state=123)
+```
+
+The export contains versioned numeric mixture parameters and column names, not
+source rows, cluster memberships, original extrema, or a pickled estimator.
+The external sampler does not clip to confidential extrema. `reviewed=True`
+acknowledges unresolved disclosure risks; it does not establish regulatory
+approval or differential privacy. Contributor checks assume one person per row.
+The existing `fit()` workflow remains available.
+Fitted parameters are read-only: this keeps sampling, export and internal review
+evidence consistent. Refit rather than editing arrays in place.
+
+## Exporting a fitted kNN model
+
+`LocalCov.prepare_export()` selects anchors before fitting their local
+distributions. It uses the full input to find neighbours and returns a fixed
+proposal so that the internal report describes exactly what will be exported.
+
+```python
+from synloc import LocalCov, ClusterCovSampler
+
+model = LocalCov(data, K=100, normalize=True)
+proposal = model.prepare_export(n_components=50, random_state=42, minimum_contributors=100)
+report = proposal.clearance_report()  # internal evidence, not release approval
+proposal.export_model("local-mixture.npz", reviewed=True)
+sampler = ClusterCovSampler.load("local-mixture.npz")
+synthetic = sampler.sample(1000, random_state=123)
+```
+
+`n_components=None` (the default) uses all rows as anchors; a smaller count
+selects distinct anchors uniformly without replacement. `K` specifies the
+neighbourhood size, independently of the number exported. An optional
+`minimum_contributors` blocks export when the actual neighbourhood row count is
+too small. `reviewed=True` acknowledges unresolved review; neither it nor a
+smaller export guarantees privacy. Overlapping neighbourhoods and repeated
+exports can reveal information jointly. Reports are confidential, and exported
+sampling does not use source bounds. `LocalCov.fit()` remains available.
+
+For mixed categorical and numeric panels, see the separate
+[`MixedClusterCovModel` format](docs_source/mixed_cluster.rst).
+Public category codes and labels and deterministic decoding are included in the
+mixed archive; this does not make decoded data realistic or privacy-safe.
 
 ## How to cite?
 

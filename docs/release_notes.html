@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Version 1.0 notes &#8212; synloc 1.0.0</title>
+    <title>Version 1.1 notes &#8212; synloc 1.1.0</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
     <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
-    <script src="_static/documentation_options.js?v=8d563738"></script>
+    <script src="_static/documentation_options.js?v=fc837d61"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -33,7 +33,45 @@
 
           <div class="body" role="main">
             
-  <section id="version-1-0-notes">
+  <section id="version-1-1-notes">
+<h1>Version 1.1 notes<a class="headerlink" href="#version-1-1-notes" title="Link to this heading">¶</a></h1>
+<p>Version 1.1 adds optional parameter-only export for <code class="docutils literal notranslate"><span class="pre">clusterCov</span></code> and
+<code class="docutils literal notranslate"><span class="pre">LocalCov</span></code>, plus public-schema mixed-type cluster exports. The basic
+constructors, <code class="docutils literal notranslate"><span class="pre">fit()</span></code>, <code class="docutils literal notranslate"><span class="pre">synthetic</span></code> and diagnostic methods remain available.
+This is a GitHub source release; PyPI publication is separate. Model export does
+not establish disclosure clearance.</p>
+<section id="corrections-in-1-1">
+<h2>Corrections in 1.1<a class="headerlink" href="#corrections-in-1-1" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">LocalCov</span></code> accepts an optional trailing <code class="docutils literal notranslate"><span class="pre">random_state</span></code>. Explicit integer
+seeds now control both kNN anchor selection and NumPy/SciPy callback draws,
+with the same results across worker counts in the same numerical environment.
+Seeded parallel calls use isolated <code class="docutils literal notranslate"><span class="pre">loky</span></code> processes, not a threading override.
+The caller’s NumPy RNG is restored; custom callbacks with independent random
+generators are outside this guarantee. Omitting the seed retains legacy
+behaviour.</p></li>
+<li><p>Count arguments accept NumPy integers and reject booleans and fractions.</p></li>
+<li><p>Failed refits clear stale synthetic results and diagnostics instead of
+leaving an earlier fit marked as successful.</p></li>
+<li><p>Locally constant decimal values are preserved exactly, including without
+clipping.</p></li>
+<li><p>Fitted mixture parameters are read-only. Callers cannot silently change
+sampling or exported parameters independently of the fitted factors and
+internal review evidence.</p></li>
+<li><p>Covariance validation and factorization use variance-scaled units. Invalid
+small-scale blocks are no longer hidden by a large variance elsewhere.
+Constant dimensions require exactly zero covariance rows and columns.</p></li>
+<li><p>Real-valued input is required; complex source values and mixed raw scores
+are rejected before conversion can discard their imaginary parts.</p></li>
+</ul>
+<p>The version-1 export schemas are unchanged. The corrected factorization can
+change exact seeded samples relative to previous local builds. Direct and
+reloaded samples still agree within the same build and numerical environment;
+historical paper results are not promised to be bitwise reproducible. The
+replication materials and saved research results have not been changed or rerun.</p>
+</section>
+</section>
+<section id="version-1-0-notes">
 <h1>Version 1.0 notes<a class="headerlink" href="#version-1-0-notes" title="Link to this heading">¶</a></h1>
 <p>Version 1.0 is a stability release. It keeps the existing public API while
 making the package safer for PyPI users.</p>
@@ -99,9 +137,15 @@ python<span class="w"> </span>-m<span class="w"> </span>twine<span class="w"> </
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="input_requirements.html">Input requirements</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model_export.html">Model export and loading</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mixed_cluster.html">Mixed-type clusterCov export</a></li>
 <li class="toctree-l1"><a class="reference internal" href="metrics.html">Quality metrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="replication.html">Replication materials</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Version 1.0 notes</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Version 1.1 notes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#corrections-in-1-1">Corrections in 1.1</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#version-1-0-notes">Version 1.0 notes</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#highlights">Highlights</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#recommended-release-checklist">Recommended release checklist</a></li>
 </ul>
@@ -137,7 +181,7 @@ python<span class="w"> </span>-m<span class="w"> </span>twine<span class="w"> </
       &#169;2026, Ali Furkan Kalay.
       
       |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
       &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
       |

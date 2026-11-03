@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-11-03
+### Added
+- Added optional parameter-only model fitting, export and independent sampling for `clusterCov` and `LocalCov`; `LocalCov.prepare_export()` can select all components or a reproducible subset while finding neighbours in the full input.
+- Added versioned NPZ loading with pickle disabled, read-only fitted parameters, and a separate public-schema mixed-type cluster format.
+- Added internal contributor-count and disclosure diagnostics. Export requires an explicit review acknowledgement; neither the diagnostics nor successful export establish privacy or release approval.
+- Added model-export regression coverage and a focused export/loading guide with compiled HTML for GitHub Pages.
+
+### Fixed
+- Made explicit kNN seeds control anchor selection and NumPy/SciPy callback draws consistently across worker counts while restoring the caller's NumPy RNG state.
+- Accepted NumPy integer counts, rejected boolean/fractional counts and complex inputs, and cleared stale outputs after failed refits.
+- Preserved locally constant decimal values exactly and validated/factored covariances in variance-scaled units.
+
+### Compatibility
+- Preserved the basic constructors and `fit()` workflows; `LocalCov` has a trailing optional `random_state`.
+- Exported means and covariances remain in original units; exported sampling does not clip to confidential source bounds.
+- Exact seeded samples can differ from earlier numerical implementations; direct and reloaded samples agree within the same build and numerical environment.
+- This update publishes source and documentation on GitHub, not a PyPI upload. Existing published-paper replication materials are unchanged.
+
 ## [1.0.0] - 2026-05-02
 ### Added
 - Added numeric-data validation with clear errors for non-numeric columns, duplicate columns, infinite values, and all-missing columns.

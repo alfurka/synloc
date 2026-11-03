@@ -1,6 +1,7 @@
 from .kNNResampler import kNNResampler
 from .clusterResampler import clusterResampler
 from .dists import LocalCov, clusterCov
+from .clusterCovSampler import ClusterCovSampler
 from .tools import (
     compareStats,
     compute_k_distances,
@@ -10,4 +11,4 @@ from .tools import (
     sample_trivariate_xyz,
 )
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"

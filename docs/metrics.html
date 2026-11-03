@@ -5,17 +5,17 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Quality metrics &#8212; synloc 1.0.0</title>
+    <title>Quality metrics &#8212; synloc 1.1.0</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
     <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
-    <script src="_static/documentation_options.js?v=8d563738"></script>
+    <script src="_static/documentation_options.js?v=fc837d61"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Replication materials" href="replication.html" />
-    <link rel="prev" title="Usage" href="usage.html" />
+    <link rel="prev" title="Mixed-type clusterCov export" href="mixed_cluster.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -41,7 +41,7 @@ These metrics are descriptive checks, not formal privacy guarantees.</p>
 <h2>Per-variable statistics<a class="headerlink" href="#per-variable-statistics" title="Link to this heading">¶</a></h2>
 <p>Use <code class="docutils literal notranslate"><span class="pre">compareStats</span></code> to compare each original and synthetic column:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">stats</span> <span class="o">=</span> <span class="n">resampler</span><span class="o">.</span><span class="n">compareStats</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">stats</span><span class="p">[[</span><span class="s2">&quot;original_mean&quot;</span><span class="p">,</span> <span class="s2">&quot;synthetic_mean&quot;</span><span class="p">,</span> <span class="s2">&quot;ks_statistic&quot;</span><span class="p">]])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">stats</span><span class="p">[[</span><span class="s2">"original_mean"</span><span class="p">,</span> <span class="s2">"synthetic_mean"</span><span class="p">,</span> <span class="s2">"ks_statistic"</span><span class="p">]])</span>
 </pre></div>
 </div>
 <p>The returned <code class="docutils literal notranslate"><span class="pre">DataFrame</span></code> includes:</p>
@@ -59,7 +59,7 @@ These metrics are descriptive checks, not formal privacy guarantees.</p>
 <h2>Overall report<a class="headerlink" href="#overall-report" title="Link to this heading">¶</a></h2>
 <p>Use <code class="docutils literal notranslate"><span class="pre">qualityReport</span></code> on a fitted resampler:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">report</span> <span class="o">=</span> <span class="n">resampler</span><span class="o">.</span><span class="n">qualityReport</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">report</span><span class="p">[</span><span class="s2">&quot;overall&quot;</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">report</span><span class="p">[</span><span class="s2">"overall"</span><span class="p">])</span>
 </pre></div>
 </div>
 <p>The report contains:</p>
@@ -120,6 +120,8 @@ assessment when synthetic data will be shared.</p>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="input_requirements.html">Input requirements</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model_export.html">Model export and loading</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mixed_cluster.html">Mixed-type clusterCov export</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Quality metrics</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#per-variable-statistics">Per-variable statistics</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#overall-report">Overall report</a></li>
@@ -128,7 +130,8 @@ assessment when synthetic data will be shared.</p>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="replication.html">Replication materials</a></li>
-<li class="toctree-l1"><a class="reference internal" href="release_notes.html">Version 1.0 notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="release_notes.html">Version 1.1 notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="release_notes.html#version-1-0-notes">Version 1.0 notes</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API reference</span></p>
 <ul>
@@ -139,7 +142,7 @@ assessment when synthetic data will be shared.</p>
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="usage.html" title="previous chapter">Usage</a></li>
+      <li>Previous: <a href="mixed_cluster.html" title="previous chapter">Mixed-type clusterCov export</a></li>
       <li>Next: <a href="replication.html" title="next chapter">Replication materials</a></li>
   </ul></li>
 </ul>
@@ -160,7 +163,7 @@ assessment when synthetic data will be shared.</p>
       &#169;2026, Ali Furkan Kalay.
       
       |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
       &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
       |

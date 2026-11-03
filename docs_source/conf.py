@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.abspath(".."))
 project = "synloc"
 author = "Ali Furkan Kalay"
 copyright = "2026, Ali Furkan Kalay"
-release = "1.0.0"
+release = "1.1.0"
 
 extensions = [
     "sphinx.ext.autodoc",
@@ -19,7 +19,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 html_theme = "alabaster"
 html_static_path = []
-html_title = "synloc 1.0.0"
+html_title = "synloc 1.1.0"
 
 autodoc_typehints = "description"
 napoleon_google_docstring = False

@@ -10,8 +10,9 @@ The public API is intentionally small:
 * ``clusterCov`` uses KMeans clusters.
 * ``compareStats`` and ``quality_report`` summarize utility diagnostics.
 
-Version 1.0 keeps the existing constructor and method names while adding
-clearer input checks, quality metrics, tests, and release documentation.
+Version 1.1 adds optional parameter-only model exports and reproducible seeded
+kNN fitting while retaining the basic constructor and ``fit()`` workflows.
+See the release notes for corrections and numerical reproducibility limits.
 
 .. toctree::
    :maxdepth: 2
@@ -20,6 +21,8 @@ clearer input checks, quality metrics, tests, and release documentation.
    installation
    input_requirements
    usage
+   model_export
+   mixed_cluster
    metrics
    replication
    release_notes

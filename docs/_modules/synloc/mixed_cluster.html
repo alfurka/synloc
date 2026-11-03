@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>synloc.mixed_cluster &#8212; synloc 1.1.0</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../_static/documentation_options.js?v=fc837d61"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for synloc.mixed_cluster</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Public-schema mixed-type encoding and parameter-only clusterCov sampling.</span>
+
+<span class="sd">The supplied schema must contain only independently established public codes and</span>
+<span class="sd">bounds. Neither validation nor reviewed=True constitutes disclosure clearance.</span>
+<span class="sd">"""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">zipfile</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.clusterCovSampler</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClusterCovSampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.dists</span><span class="w"> </span><span class="kn">import</span> <span class="n">clusterCov</span>
+
+
+<span class="n">_VERSION</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">_MAX_METADATA</span> <span class="o">=</span> <span class="mi">1_000_000</span>
+<span class="n">_MAX_COLUMNS</span> <span class="o">=</span> <span class="mi">512</span>
+<span class="n">_MAX_COMPONENTS</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="n">_MAX_ARCHIVE_BYTES</span> <span class="o">=</span> <span class="mi">512</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span>
+<span class="n">_NAME</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^[A-Za-z][A-Za-z0-9_]{0,127}$"</span><span class="p">)</span>
+<span class="n">_FIELDS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"version"</span><span class="p">,</span> <span class="s2">"metadata"</span><span class="p">,</span> <span class="s2">"means"</span><span class="p">,</span> <span class="s2">"covariances"</span><span class="p">,</span> <span class="s2">"weights"</span><span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_object</span><span class="p">(</span><span class="n">pairs</span><span class="p">):</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">pairs</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Duplicate metadata key."</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="k">return</span> <span class="n">result</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_number</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">abs</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="o">**</span><span class="mi">53</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_schema</span><span class="p">(</span><span class="n">schema</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Validate and copy the complete public decoding contract, fail closed."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">set</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span> <span class="o">!=</span> <span class="p">{</span><span class="s2">"version"</span><span class="p">,</span> <span class="s2">"columns"</span><span class="p">,</span> <span class="s2">"constraints"</span><span class="p">}:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Schema must contain exactly version, columns and constraints."</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">schema</span><span class="p">[</span><span class="s2">"version"</span><span class="p">])</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">int</span> <span class="ow">or</span> <span class="n">schema</span><span class="p">[</span><span class="s2">"version"</span><span class="p">]</span> <span class="o">!=</span> <span class="n">_VERSION</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Unsupported mixed schema version."</span><span class="p">)</span>
+    <span class="n">columns</span> <span class="o">=</span> <span class="n">schema</span><span class="p">[</span><span class="s2">"columns"</span><span class="p">]</span>
+    <span class="n">constraints</span> <span class="o">=</span> <span class="n">schema</span><span class="p">[</span><span class="s2">"constraints"</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">columns</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="mi">1</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">columns</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">_MAX_COLUMNS</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">constraints</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">constraints</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">_MAX_COLUMNS</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Invalid schema size."</span><span class="p">)</span>
+    <span class="n">names</span><span class="p">,</span> <span class="n">specs</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(),</span> <span class="p">{},</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"name"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">spec</span> <span class="ow">or</span> <span class="s2">"kind"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">spec</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Invalid column specification."</span><span class="p">)</span>
+        <span class="n">name</span><span class="p">,</span> <span class="n">kind</span> <span class="o">=</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"name"</span><span class="p">],</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"kind"</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">_NAME</span><span class="o">.</span><span class="n">fullmatch</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="ow">or</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Column names must be unique simple identifiers."</span><span class="p">)</span>
+        <span class="n">names</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">specs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">spec</span>
+        <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"category"</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span> <span class="o">!=</span> <span class="p">{</span><span class="s2">"name"</span><span class="p">,</span> <span class="s2">"kind"</span><span class="p">,</span> <span class="s2">"categories"</span><span class="p">,</span> <span class="s2">"labels"</span><span class="p">}:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Invalid category specification."</span><span class="p">)</span>
+            <span class="n">categories</span> <span class="o">=</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"categories"</span><span class="p">]</span>
+            <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">categories</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="mi">1</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">categories</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">_MAX_COLUMNS</span>
+                    <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">int</span> <span class="ow">or</span> <span class="nb">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="o">**</span><span class="mi">53</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">categories</span><span class="p">)</span>
+                    <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">categories</span><span class="p">))</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">categories</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Categories must be unique public integer codes."</span><span class="p">)</span>
+            <span class="n">labels</span> <span class="o">=</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"labels"</span><span class="p">]</span>
+            <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">categories</span><span class="p">)</span>
+                    <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">label</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">label</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">200</span> <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Category labels must describe every public code."</span><span class="p">)</span>
+            <span class="n">width</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">categories</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">kind</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"integer"</span><span class="p">,</span> <span class="s2">"continuous"</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span> <span class="o">!=</span> <span class="p">{</span><span class="s2">"name"</span><span class="p">,</span> <span class="s2">"kind"</span><span class="p">,</span> <span class="s2">"min"</span><span class="p">,</span> <span class="s2">"max"</span><span class="p">}:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Invalid numeric specification."</span><span class="p">)</span>
+            <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"min"</span><span class="p">],</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"max"</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_number</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Bounds must be finite public numbers or null."</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">lo</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">hi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">lo</span> <span class="o">&gt;</span> <span class="n">hi</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Invalid numeric bounds."</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"integer"</span> <span class="ow">and</span> <span class="p">(</span><span class="n">lo</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">hi</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="o">**</span><span class="mi">53</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">))):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Integer bounds must be finite exact integers."</span><span class="p">)</span>
+            <span class="n">width</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Unknown column kind or transform."</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">width</span> <span class="o">&gt;</span> <span class="n">_MAX_COLUMNS</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Encoded dimension exceeds the limit."</span><span class="p">)</span>
+    <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="n">constraints</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">constraint</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">set</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span> <span class="o">!=</span> <span class="p">{</span><span class="s2">"kind"</span><span class="p">,</span> <span class="s2">"left"</span><span class="p">,</span> <span class="s2">"right"</span><span class="p">}</span> <span class="ow">or</span> <span class="n">constraint</span><span class="p">[</span><span class="s2">"kind"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"less_equal"</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Unknown or invalid constraint."</span><span class="p">)</span>
+        <span class="n">left</span><span class="p">,</span> <span class="n">right</span> <span class="o">=</span> <span class="n">constraint</span><span class="p">[</span><span class="s2">"left"</span><span class="p">],</span> <span class="n">constraint</span><span class="p">[</span><span class="s2">"right"</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">right</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="n">left</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">specs</span> <span class="ow">or</span> <span class="n">right</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">specs</span> <span class="ow">or</span> <span class="n">left</span> <span class="o">==</span> <span class="n">right</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Constraint references invalid columns."</span><span class="p">)</span>
+        <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">specs</span><span class="p">[</span><span class="n">left</span><span class="p">],</span> <span class="n">specs</span><span class="p">[</span><span class="n">right</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">a</span><span class="p">[</span><span class="s2">"kind"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"integer"</span> <span class="ow">or</span> <span class="n">b</span><span class="p">[</span><span class="s2">"kind"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"integer"</span> <span class="ow">or</span> <span class="n">a</span><span class="p">[</span><span class="s2">"min"</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">b</span><span class="p">[</span><span class="s2">"min"</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Constraints require compatible bounded integer columns."</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">left</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"A constraint left column may appear only once."</span><span class="p">)</span>
+        <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">left</span><span class="p">)</span>
+    <span class="c1"># Disallow chains: constraint order cannot silently determine the result.</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="s2">"right"</span><span class="p">]</span> <span class="ow">in</span> <span class="n">seen</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">constraints</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Chained constraints are not supported."</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
+    <span class="n">encoded</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">allow_nan</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">separators</span><span class="o">=</span><span class="p">(</span><span class="s2">","</span><span class="p">,</span> <span class="s2">":"</span><span class="p">))</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">encoded</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">))</span> <span class="o">&gt;</span> <span class="n">_MAX_METADATA</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Metadata exceeds the limit."</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span><span class="p">,</span> <span class="n">width</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_encoded_names</span><span class="p">(</span><span class="n">width</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"score_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">width</span><span class="p">)]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_encode</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">schema</span><span class="p">,</span> <span class="n">width</span><span class="p">):</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">spec</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">schema</span><span class="p">[</span><span class="s2">"columns"</span><span class="p">]]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">!=</span> <span class="n">names</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Data must contain exactly the schema columns in order and at least one row."</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">is_complex_dtype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span> <span class="k">for</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">dtypes</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Data must contain real numeric source codes and values."</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Data must contain numeric source codes and values."</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Missing or nonfinite source values are not supported."</span><span class="p">)</span>
+    <span class="n">encoded</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="n">width</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">offset</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">spec</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">schema</span><span class="p">[</span><span class="s2">"columns"</span><span class="p">]):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">values</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"kind"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"category"</span><span class="p">:</span>
+            <span class="n">categories</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">spec</span><span class="p">[</span><span class="s2">"categories"</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+            <span class="n">block</span> <span class="o">=</span> <span class="n">value</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">==</span> <span class="n">categories</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">block</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Source category outside public dictionary: </span><span class="si">{</span><span class="n">spec</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+            <span class="n">encoded</span><span class="p">[:,</span> <span class="n">offset</span><span class="p">:</span><span class="n">offset</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">categories</span><span class="p">)]</span> <span class="o">=</span> <span class="n">block</span>
+            <span class="n">offset</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">categories</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"min"</span><span class="p">],</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"max"</span><span class="p">]</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">lo</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">value</span> <span class="o">&lt;</span> <span class="n">lo</span><span class="p">))</span> <span class="ow">or</span> <span class="p">(</span><span class="n">hi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">value</span> <span class="o">&gt;</span> <span class="n">hi</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Source value outside public bounds: </span><span class="si">{</span><span class="n">spec</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"kind"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"integer"</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">value</span> <span class="o">!=</span> <span class="n">np</span><span class="o">.</span><span class="n">rint</span><span class="p">(</span><span class="n">value</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Source value is not an integer: </span><span class="si">{</span><span class="n">spec</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+            <span class="n">encoded</span><span class="p">[:,</span> <span class="n">offset</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="n">offset</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">schema</span><span class="p">[</span><span class="s2">"constraints"</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">values</span><span class="p">[:,</span> <span class="n">names</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="s2">"left"</span><span class="p">])]</span> <span class="o">&gt;</span> <span class="n">values</span><span class="p">[:,</span> <span class="n">names</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="s2">"right"</span><span class="p">])]):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Source violates a public cross-variable constraint."</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">encoded</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">_encoded_names</span><span class="p">(</span><span class="n">width</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_inspect_arrays</span><span class="p">(</span><span class="n">zf</span><span class="p">,</span> <span class="n">items</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Bound NPY headers and declared sizes before NumPy allocates arrays."""</span>
+    <span class="n">headers</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">zf</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
+            <span class="n">version</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">format</span><span class="o">.</span><span class="n">read_magic</span><span class="p">(</span><span class="n">stream</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">version</span> <span class="o">==</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="n">shape</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">format</span><span class="o">.</span><span class="n">read_array_header_1_0</span><span class="p">(</span><span class="n">stream</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">version</span> <span class="o">==</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="n">shape</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">format</span><span class="o">.</span><span class="n">read_array_header_2_0</span><span class="p">(</span><span class="n">stream</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Unsupported NPY header version."</span><span class="p">)</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="n">dtype</span><span class="o">.</span><span class="n">itemsize</span>
+            <span class="k">for</span> <span class="n">dimension</span> <span class="ow">in</span> <span class="n">shape</span><span class="p">:</span>
+                <span class="n">size</span> <span class="o">*=</span> <span class="n">dimension</span>
+            <span class="k">if</span> <span class="n">size</span> <span class="o">&gt;</span> <span class="n">_MAX_ARCHIVE_BYTES</span> <span class="ow">or</span> <span class="n">size</span> <span class="o">!=</span> <span class="n">item</span><span class="o">.</span><span class="n">file_size</span> <span class="o">-</span> <span class="n">stream</span><span class="o">.</span><span class="n">tell</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Invalid declared array size."</span><span class="p">)</span>
+            <span class="n">headers</span><span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">filename</span><span class="p">[:</span><span class="o">-</span><span class="mi">4</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span>
+    <span class="n">shape</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">headers</span><span class="p">[</span><span class="s2">"means"</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="ow">not</span> <span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">_MAX_COMPONENTS</span> <span class="ow">or</span> <span class="ow">not</span> <span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">_MAX_COLUMNS</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Invalid mixed parameter dimensions."</span><span class="p">)</span>
+    <span class="n">k</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">shape</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">expected</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"means"</span><span class="p">,</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">p</span><span class="p">)),</span> <span class="p">(</span><span class="s2">"covariances"</span><span class="p">,</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">p</span><span class="p">)),</span> <span class="p">(</span><span class="s2">"weights"</span><span class="p">,</span> <span class="p">(</span><span class="n">k</span><span class="p">,))):</span>
+        <span class="n">actual</span><span class="p">,</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">headers</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">actual</span> <span class="o">!=</span> <span class="n">expected</span> <span class="ow">or</span> <span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="ow">not</span> <span class="ow">in</span> <span class="s2">"fiu"</span> <span class="ow">or</span> <span class="n">dtype</span><span class="o">.</span><span class="n">itemsize</span> <span class="o">&gt;</span> <span class="mi">8</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Invalid mixed parameter array."</span><span class="p">)</span>
+    <span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">headers</span><span class="p">[</span><span class="s2">"metadata"</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">shape</span> <span class="o">!=</span> <span class="p">()</span> <span class="ow">or</span> <span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="o">!=</span> <span class="s2">"U"</span> <span class="ow">or</span> <span class="n">dtype</span><span class="o">.</span><span class="n">itemsize</span> <span class="o">&gt;</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">_MAX_METADATA</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Invalid metadata array."</span><span class="p">)</span>
+    <span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">headers</span><span class="p">[</span><span class="s2">"version"</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">shape</span> <span class="o">!=</span> <span class="p">()</span> <span class="ow">or</span> <span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="ow">not</span> <span class="ow">in</span> <span class="s2">"iu"</span> <span class="ow">or</span> <span class="n">dtype</span><span class="o">.</span><span class="n">itemsize</span> <span class="o">&gt;</span> <span class="mi">8</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Invalid version array."</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="MixedClusterCovSampler">
+<a class="viewcode-back" href="../../mixed_cluster.html#synloc.mixed_cluster.MixedClusterCovSampler">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MixedClusterCovSampler</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Decode draws from a validated, self-contained mixed parameter archive.</span>
+
+<span class="sd">    Use :meth:`load` to read an NPZ. ``raw_scores`` exposes the joint latent</span>
+<span class="sd">    draws and ``decode`` optionally reports counts of each intervention.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">means</span><span class="p">,</span> <span class="n">covariances</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">schema</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">_validate_schema</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
+        <span class="n">means_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">means</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">means_array</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">means_array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">_MAX_COMPONENTS</span> <span class="ow">or</span> <span class="n">means_array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">width</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Invalid mixed parameter dimensions."</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">ClusterCovSampler</span><span class="p">(</span><span class="n">means</span><span class="p">,</span> <span class="n">covariances</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">_encoded_names</span><span class="p">(</span><span class="n">width</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_columns</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="p">[</span><span class="s2">"columns"</span><span class="p">])</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">columns</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Immutable decoded output column names."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_columns</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">schema</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Return a copy of the independently supplied public schema."""</span>
+        <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MixedClusterCovSampler.load">
+<a class="viewcode-back" href="../../mixed_cluster.html#synloc.mixed_cluster.MixedClusterCovSampler.load">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Load only the bounded version-1 NPZ format, without pickle."""</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">source</span><span class="p">:</span>
+                <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">source</span><span class="p">)</span> <span class="k">as</span> <span class="n">zf</span><span class="p">:</span>
+                    <span class="n">items</span> <span class="o">=</span> <span class="n">zf</span><span class="o">.</span><span class="n">infolist</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">items</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">_FIELDS</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{</span><span class="n">x</span><span class="o">.</span><span class="n">filename</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">items</span><span class="p">}</span> <span class="o">!=</span> <span class="p">{</span><span class="n">f</span> <span class="o">+</span> <span class="s2">".npy"</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">_FIELDS</span><span class="p">}</span>
+                            <span class="ow">or</span> <span class="nb">sum</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">file_size</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">items</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">_MAX_ARCHIVE_BYTES</span>
+                            <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">flag_bits</span> <span class="o">&amp;</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">items</span><span class="p">)):</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Invalid or oversized mixed archive."</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">next</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">file_size</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">items</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">filename</span> <span class="o">==</span> <span class="s2">"metadata.npy"</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">_MAX_METADATA</span> <span class="o">+</span> <span class="mi">1024</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Metadata exceeds the limit."</span><span class="p">)</span>
+                    <span class="n">_inspect_arrays</span><span class="p">(</span><span class="n">zf</span><span class="p">,</span> <span class="n">items</span><span class="p">)</span>
+                <span class="n">source</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">allow_pickle</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">as</span> <span class="n">archive</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">archive</span><span class="o">.</span><span class="n">files</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">_FIELDS</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">set</span><span class="p">(</span><span class="n">archive</span><span class="o">.</span><span class="n">files</span><span class="p">)</span> <span class="o">!=</span> <span class="n">_FIELDS</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Invalid mixed archive fields."</span><span class="p">)</span>
+                    <span class="n">version</span> <span class="o">=</span> <span class="n">archive</span><span class="p">[</span><span class="s2">"version"</span><span class="p">]</span>
+                    <span class="n">metadata</span> <span class="o">=</span> <span class="n">archive</span><span class="p">[</span><span class="s2">"metadata"</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">version</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">()</span> <span class="ow">or</span> <span class="n">version</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="ow">not</span> <span class="ow">in</span> <span class="s2">"iu"</span> <span class="ow">or</span> <span class="nb">int</span><span class="p">(</span><span class="n">version</span><span class="p">)</span> <span class="o">!=</span> <span class="n">_VERSION</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Unsupported mixed archive version."</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">metadata</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">()</span> <span class="ow">or</span> <span class="n">metadata</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="o">!=</span> <span class="s2">"U"</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Metadata must be a scalar JSON string."</span><span class="p">)</span>
+                    <span class="n">text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">))</span> <span class="o">&gt;</span> <span class="n">_MAX_METADATA</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Metadata exceeds the limit."</span><span class="p">)</span>
+                    <span class="n">schema</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">object_pairs_hook</span><span class="o">=</span><span class="n">_object</span><span class="p">,</span> <span class="n">parse_constant</span><span class="o">=</span><span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="p">(</span><span class="n">_</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="p">())</span><span class="o">.</span><span class="n">throw</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Nonfinite JSON value."</span><span class="p">)))</span>
+                    <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">archive</span><span class="p">[</span><span class="s2">"means"</span><span class="p">],</span> <span class="n">archive</span><span class="p">[</span><span class="s2">"covariances"</span><span class="p">],</span> <span class="n">archive</span><span class="p">[</span><span class="s2">"weights"</span><span class="p">],</span> <span class="n">schema</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">zipfile</span><span class="o">.</span><span class="n">BadZipFile</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">,</span> <span class="ne">EOFError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Invalid mixed model archive."</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span></div>
+
+
+<div class="viewcode-block" id="MixedClusterCovSampler.raw_scores">
+<a class="viewcode-back" href="../../mixed_cluster.html#synloc.mixed_cluster.MixedClusterCovSampler.raw_scores">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">raw_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Draw encoded Gaussian scores in original feature units."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">random_state</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MixedClusterCovSampler.decode">
+<a class="viewcode-back" href="../../mixed_cluster.html#synloc.mixed_cluster.MixedClusterCovSampler.decode">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw_scores</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">return_diagnostics</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Decode scores, optionally returning per-rule record counts.</span>
+
+<span class="sd">        Argmax ties use first dictionary entry; integers use NumPy ties-to-even</span>
+<span class="sd">        rounding, then public bounds. Cross-constraints lower the left value.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw_scores</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">list</span><span class="p">(</span><span class="n">raw_scores</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">columns</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Raw scores must have the exact encoded column names and order."</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">is_complex_dtype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span> <span class="k">for</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="n">raw_scores</span><span class="o">.</span><span class="n">dtypes</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Raw scores must be real numeric values."</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="n">raw_scores</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Raw scores must be numeric."</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Raw scores must be finite."</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">,</span> <span class="n">raw_numeric</span><span class="p">,</span> <span class="n">diagnostics</span><span class="p">,</span> <span class="n">offset</span> <span class="o">=</span> <span class="p">{},</span> <span class="p">{},</span> <span class="p">{</span><span class="s2">"rows"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">),</span> <span class="s2">"columns"</span><span class="p">:</span> <span class="p">{},</span> <span class="s2">"constraints"</span><span class="p">:</span> <span class="p">{}},</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="p">[</span><span class="s2">"columns"</span><span class="p">]:</span>
+            <span class="n">name</span><span class="p">,</span> <span class="n">kind</span> <span class="o">=</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"name"</span><span class="p">],</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"kind"</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"category"</span><span class="p">:</span>
+                <span class="n">cats</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">spec</span><span class="p">[</span><span class="s2">"categories"</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+                <span class="n">block</span> <span class="o">=</span> <span class="n">values</span><span class="p">[:,</span> <span class="n">offset</span><span class="p">:</span><span class="n">offset</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">cats</span><span class="p">)]</span>
+                <span class="n">chosen</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">decoded</span> <span class="o">=</span> <span class="n">cats</span><span class="p">[</span><span class="n">chosen</span><span class="p">]</span>
+                <span class="n">valid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span><span class="n">block</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="n">block</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">ties</span> <span class="o">=</span> <span class="p">(</span><span class="n">block</span> <span class="o">==</span> <span class="n">block</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
+                <span class="n">diagnostics</span><span class="p">[</span><span class="s2">"columns"</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">"invalid_one_hot_before"</span><span class="p">:</span> <span class="nb">int</span><span class="p">((</span><span class="o">~</span><span class="n">valid</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+                    <span class="s2">"invalid_category_after"</span><span class="p">:</span> <span class="nb">int</span><span class="p">((</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">decoded</span><span class="p">,</span> <span class="n">cats</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+                    <span class="s2">"ties"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">ties</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+                    <span class="s2">"decoded"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">),</span>
+                <span class="p">}</span>
+                <span class="n">offset</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">cats</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">raw</span> <span class="o">=</span> <span class="n">values</span><span class="p">[:,</span> <span class="n">offset</span><span class="p">]</span>
+                <span class="n">raw_numeric</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">raw</span>
+                <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"min"</span><span class="p">],</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"max"</span><span class="p">]</span>
+                <span class="n">rounded</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rint</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span> <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"integer"</span> <span class="k">else</span> <span class="n">raw</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="n">decoded</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">rounded</span><span class="p">,</span> <span class="n">lo</span> <span class="k">if</span> <span class="n">lo</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">hi</span> <span class="k">if</span> <span class="n">hi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+                <span class="n">outside</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">raw</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">lo</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">outside</span> <span class="o">|=</span> <span class="n">raw</span> <span class="o">&lt;</span> <span class="n">lo</span>
+                <span class="k">if</span> <span class="n">hi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">outside</span> <span class="o">|=</span> <span class="n">raw</span> <span class="o">&gt;</span> <span class="n">hi</span>
+                <span class="n">diagnostics</span><span class="p">[</span><span class="s2">"columns"</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">"outside_bounds_before"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">outside</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+                    <span class="s2">"outside_bounds_after"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(((</span><span class="n">decoded</span> <span class="o">&lt;</span> <span class="n">lo</span> <span class="k">if</span> <span class="n">lo</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">raw</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">))</span> <span class="o">|</span> <span class="p">(</span><span class="n">decoded</span> <span class="o">&gt;</span> <span class="n">hi</span> <span class="k">if</span> <span class="n">hi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">raw</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)))</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+                    <span class="s2">"noninteger_before"</span><span class="p">:</span> <span class="nb">int</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">rint</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span> <span class="o">!=</span> <span class="n">raw</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"integer"</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
+                    <span class="s2">"noninteger_after"</span><span class="p">:</span> <span class="nb">int</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">rint</span><span class="p">(</span><span class="n">decoded</span><span class="p">)</span> <span class="o">!=</span> <span class="n">decoded</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"integer"</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
+                    <span class="s2">"rounded"</span><span class="p">:</span> <span class="nb">int</span><span class="p">((</span><span class="n">rounded</span> <span class="o">!=</span> <span class="n">raw</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+                    <span class="s2">"clipped"</span><span class="p">:</span> <span class="nb">int</span><span class="p">((</span><span class="n">decoded</span> <span class="o">!=</span> <span class="n">rounded</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+                <span class="p">}</span>
+                <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"integer"</span><span class="p">:</span>
+                    <span class="n">decoded</span> <span class="o">=</span> <span class="n">decoded</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+                <span class="n">offset</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">decoded</span>
+        <span class="n">frame</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">raw_scores</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="p">[</span><span class="s2">"constraints"</span><span class="p">]:</span>
+            <span class="n">left</span><span class="p">,</span> <span class="n">right</span> <span class="o">=</span> <span class="n">c</span><span class="p">[</span><span class="s2">"left"</span><span class="p">],</span> <span class="n">c</span><span class="p">[</span><span class="s2">"right"</span><span class="p">]</span>
+            <span class="n">changed</span> <span class="o">=</span> <span class="n">frame</span><span class="p">[</span><span class="n">left</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">frame</span><span class="p">[</span><span class="n">right</span><span class="p">]</span>
+            <span class="n">raw_changed</span> <span class="o">=</span> <span class="n">raw_numeric</span><span class="p">[</span><span class="n">left</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">raw_numeric</span><span class="p">[</span><span class="n">right</span><span class="p">]</span>
+            <span class="n">frame</span><span class="p">[</span><span class="n">left</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">frame</span><span class="p">[</span><span class="n">left</span><span class="p">],</span> <span class="n">frame</span><span class="p">[</span><span class="n">right</span><span class="p">])</span>
+            <span class="n">diagnostics</span><span class="p">[</span><span class="s2">"constraints"</span><span class="p">][</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">left</span><span class="si">}</span><span class="s2">&lt;=</span><span class="si">{</span><span class="n">right</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">"raw_violations_before"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">raw_changed</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+                <span class="s2">"violations_before"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">changed</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+                <span class="s2">"changed"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">changed</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+                <span class="s2">"violations_after"</span><span class="p">:</span> <span class="nb">int</span><span class="p">((</span><span class="n">frame</span><span class="p">[</span><span class="n">left</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">frame</span><span class="p">[</span><span class="n">right</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+            <span class="p">}</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">diagnostics</span><span class="p">)</span> <span class="k">if</span> <span class="n">return_diagnostics</span> <span class="k">else</span> <span class="n">frame</span></div>
+
+
+<div class="viewcode-block" id="MixedClusterCovSampler.sample">
+<a class="viewcode-back" href="../../mixed_cluster.html#synloc.mixed_cluster.MixedClusterCovSampler.sample">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">return_diagnostics</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Draw and decode; same seed gives the same direct and loaded result."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_scores</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">random_state</span><span class="p">),</span> <span class="n">return_diagnostics</span><span class="o">=</span><span class="n">return_diagnostics</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_export</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">destination</span><span class="p">:</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">savez_compressed</span><span class="p">(</span><span class="n">destination</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">_VERSION</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span>
+                                <span class="n">metadata</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="p">,</span> <span class="n">allow_nan</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">separators</span><span class="o">=</span><span class="p">(</span><span class="s2">","</span><span class="p">,</span> <span class="s2">":"</span><span class="p">))),</span>
+                                <span class="n">means</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">means_</span><span class="p">,</span> <span class="n">covariances</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">covariances_</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">weights_</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="MixedClusterCovModel">
+<a class="viewcode-back" href="../../mixed_cluster.html#synloc.mixed_cluster.MixedClusterCovModel">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MixedClusterCovModel</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Fit clusterCov to one-hot categories under a caller-supplied public schema.</span>
+
+<span class="sd">    Rows must be persons, not identifiers. Bounds/dictionaries must be fixed</span>
+<span class="sd">    independently of the fitted data, reviewed as public, and supplied explicitly.</span>
+<span class="sd">    Numeric scaling affects clustering only. The source and internal clearance</span>
+<span class="sd">    diagnostics must not be included in a released archive.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">schema</span><span class="p">,</span> <span class="n">n_clusters</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">size_min</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">_validate_schema</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
+        <span class="n">encoded</span> <span class="o">=</span> <span class="n">_encode</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fit</span> <span class="o">=</span> <span class="n">clusterCov</span><span class="p">(</span><span class="n">encoded</span><span class="p">,</span> <span class="n">n_clusters</span><span class="o">=</span><span class="n">n_clusters</span><span class="p">,</span> <span class="n">size_min</span><span class="o">=</span><span class="n">size_min</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="n">normalize</span><span class="p">,</span> <span class="n">clipping</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sampler</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="MixedClusterCovModel.fit_model">
+<a class="viewcode-back" href="../../mixed_cluster.html#synloc.mixed_cluster.MixedClusterCovModel.fit_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Fit the encoded mixture and retain internal contributor diagnostics."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sampler</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fit</span><span class="o">.</span><span class="n">fit_model</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sampler</span> <span class="o">=</span> <span class="n">MixedClusterCovSampler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fit</span><span class="o">.</span><span class="n">means_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fit</span><span class="o">.</span><span class="n">covariances_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fit</span><span class="o">.</span><span class="n">weights_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_require_sampler</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sampler</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Call fit_model() before sampling, reporting or exporting."</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sampler</span>
+
+<div class="viewcode-block" id="MixedClusterCovModel.clearance_report">
+<a class="viewcode-back" href="../../mixed_cluster.html#synloc.mixed_cluster.MixedClusterCovModel.clearance_report">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clearance_report</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Return confidential internal diagnostics, not privacy approval."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_require_sampler</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fit</span><span class="o">.</span><span class="n">clearance_report</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="MixedClusterCovModel.export_model">
+<a class="viewcode-back" href="../../mixed_cluster.html#synloc.mixed_cluster.MixedClusterCovModel.export_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">export_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">reviewed</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Export only after research acknowledgement and contributor gate.</span>
+
+<span class="sd">        Acknowledgement does not imply regulatory or privacy approval.</span>
+<span class="sd">        """</span>
+        <span class="n">sampler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_require_sampler</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fit</span><span class="o">.</span><span class="n">clearance_report</span><span class="p">()[</span><span class="s2">"required_contributor_check"</span><span class="p">][</span><span class="s2">"status"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"failed"</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Export blocked by failed required contributor checks."</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">reviewed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Export requires reviewed=True to acknowledge unresolved privacy review."</span><span class="p">)</span>
+        <span class="n">sampler</span><span class="o">.</span><span class="n">_export</span><span class="p">(</span><span class="n">path</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">raw_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_require_sampler</span><span class="p">()</span><span class="o">.</span><span class="n">raw_scores</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">random_state</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">decode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw_scores</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">return_diagnostics</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_require_sampler</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">raw_scores</span><span class="p">,</span> <span class="n">return_diagnostics</span><span class="o">=</span><span class="n">return_diagnostics</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">return_diagnostics</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_require_sampler</span><span class="p">()</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">random_state</span><span class="p">,</span> <span class="n">return_diagnostics</span><span class="o">=</span><span class="n">return_diagnostics</span><span class="p">)</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">synloc</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../input_requirements.html">Input requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../model_export.html">Model export and loading</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mixed_cluster.html">Mixed-type clusterCov export</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../metrics.html">Quality metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../replication.html">Replication materials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../release_notes.html">Version 1.1 notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../release_notes.html#version-1-0-notes">Version 1.0 notes</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Ali Furkan Kalay.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

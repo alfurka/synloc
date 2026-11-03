@@ -1,7 +1,8 @@
 Input requirements
 ==================
 
-``synloc`` expects a numeric ``pandas.DataFrame``.
+``synloc`` expects a real numeric ``pandas.DataFrame``. Complex-valued inputs
+are rejected rather than converted by discarding their imaginary parts.
 
 Before calling a resampler, prepare the data as follows:
 
@@ -29,9 +30,17 @@ raise a ``TypeError`` with the column names that need preprocessing.
 Integer-like variables
 ----------------------
 
-Synthetic samples are generated as continuous numeric values. If a variable
-should be integer-like, call ``round_integers`` after fitting:
+Synthetic samples are generated as continuous numeric values. For kNN
+resamplers, call ``round_integers`` after fitting:
 
 .. code-block:: python
 
    resampler.round_integers(["age", "children"], stochastic=True)
+
+``clusterCov`` does not provide this method. Round its returned DataFrame
+explicitly instead, for example:
+
+.. code-block:: python
+
+   synthetic = resampler.fit()
+   synthetic[["age", "children"]] = synthetic[["age", "children"]].round()

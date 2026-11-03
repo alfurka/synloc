@@ -10,7 +10,7 @@ from .tools import (
 from sklearn.neighbors import NearestNeighbors
 from pandas import DataFrame
 import pandas as pd # Import pandas explicitly for DataFrame creation
-from numpy import sqrt, random, arange, vstack
+from numpy import random, arange, vstack, integer, bool_
 from tqdm import tqdm
 # Import joblib for parallel processing
 from joblib import Parallel, delayed
@@ -18,7 +18,7 @@ import multiprocessing # To get CPU count
 
 # Helper function for parallel processing (needs to be defined at the top level or static)
 # It takes the necessary data explicitly to avoid issues with pickling 'self'
-def _generate_one_synthetic_point(index, original_data, neighbors_indices, method_func):
+def _generate_one_synthetic_point(index, original_data, neighbors_indices, method_func, seed=None):
     """
     Generates a single synthetic data point based on neighbors.
     Helper function for parallel execution.
@@ -27,7 +27,15 @@ def _generate_one_synthetic_point(index, original_data, neighbors_indices, metho
     # Use iloc for potentially faster integer-based indexing
     subsample = original_data.iloc[matchindex]
     # The method should return a 1D array-like object (e.g., pd.Series, np.array)
-    return method_func(subsample)
+    if seed is None:
+        return method_func(subsample)
+    # Isolate legacy NumPy/SciPy callbacks without changing their signature.
+    state = random.get_state()
+    try:
+        random.seed(seed)
+        return method_func(subsample)
+    finally:
+        random.set_state(state)
 
 
 class kNNResampler(object):
@@ -54,13 +62,16 @@ class kNNResampler(object):
     def __init__ (self, data:DataFrame, method, K:int = 30, normalize:bool = True, clipping:bool = True, n_jobs:int = -1, Args_NearestNeighbors:dict = {}, random_state=None) -> None:
         """
         Initialize kNNResampler.
-        :param random_state: Optional random seed for reproducibility.
+        :param random_state: Optional integer seed for anchors and callbacks using
+            NumPy's global RNG (including SciPy's default RNG). Seeded parallel
+            calls use isolated processes; callbacks with their own RNG are not
+            controlled. None retains the legacy global-RNG behavior.
         """
         self.data = validate_numeric_dataframe(data)
         self.method = method
-        self.K = K
-        if not isinstance(self.K, int) or self.K < 1:
+        if isinstance(K, (bool, bool_)) or not isinstance(K, (int, integer)) or K < 1:
             raise ValueError("K must be greater than or equal to 1")
+        self.K = int(K)
         self.normalize = normalize
         self.Args_NearestNeighbors = dict(Args_NearestNeighbors)
         self.clipping = clipping
@@ -74,8 +85,9 @@ class kNNResampler(object):
 
     @staticmethod
     def _resolve_n_jobs(n_jobs):
-        if not isinstance(n_jobs, int):
+        if isinstance(n_jobs, (bool, bool_)) or not isinstance(n_jobs, (int, integer)):
             raise TypeError("n_jobs must be an integer.")
+        n_jobs = int(n_jobs)
         cpu_count = multiprocessing.cpu_count()
         if n_jobs == 0:
             raise ValueError("n_jobs cannot be 0.")
@@ -95,15 +107,22 @@ class kNNResampler(object):
         """
         ### Assertations
         if sample_size is not None:
-            if not isinstance(sample_size, int) or sample_size <= 0:
+            if isinstance(sample_size, (bool, bool_)) or not isinstance(sample_size, (int, integer)) or sample_size <= 0:
                 raise ValueError("sample_size must be a positive integer")
+            sample_size = int(sample_size)
+
+        self.fitted = False
+        self.synthetic = None
+        self.metrics = None
+        self.data_distances = None
+        self.synthetic_distances = None
 
         ### Store original min/max for potential clipping later
         self._data_min = self.data.min()
         self._data_max = self.data.max()
 
         ### Checking/Imputing missing values
-        # Operate on a temporary variable to avoid modifying self.data repeatedly if fit is called multiple times
+        # Keep self.data imputed so public diagnostics use the fitted reference.
         current_data = self.data.copy()
         if current_data.isna().any().any():
             print('The original sample has missing values. Missing values are replaced with variable medians.')
@@ -111,27 +130,22 @@ class kNNResampler(object):
             current_data = fill_na_with_median(current_data, show_message=False)
             self.data = current_data.copy()
 
-        ### Normalizing data set
-        if self.normalize:
-            variances = current_data.var().fillna(0.0)
-            if (variances == 0).any():
-                print("Warning: Some columns are constant and will not be scaled.")
-            variances[variances == 0] = 1
-            scale_factors = sqrt(variances)
-            dataN = current_data / scale_factors
-        else:
-            dataN = current_data.copy()
-        # dataN is the normalized sample (or a copy) to calculate distances.
+        scale = current_data.std().fillna(0.0) if self.normalize else None
+        if scale is not None:
+            scale = scale.mask(scale == 0, 1)
+        dataN = current_data / scale if scale is not None else current_data
 
         ### Selecting index:
         n_original = current_data.shape[0]
-        rng = random if self.random_state is None else __import__('numpy').random.RandomState(self.random_state)
+        rng = random if self.random_state is None else random.RandomState(self.random_state)
         if sample_size is not None:
             actual_sample_size = sample_size
             selected_indices = rng.choice(n_original, actual_sample_size, replace=True)
         else:
             actual_sample_size = n_original
             selected_indices = arange(n_original)
+        row_seeds = (None if self.random_state is None else
+                     rng.randint(0, 2**32, size=actual_sample_size, dtype="uint32"))
 
         ### Nearest Neighbor Model
         if self.K > n_original:
@@ -153,33 +167,37 @@ class kNNResampler(object):
         
         # Process in batches to reduce DLL loading overhead
         batch_size = max(1, actual_sample_size // self.n_jobs)
-        batches = [selected_indices[i:i + batch_size] for i in range(0, len(selected_indices), batch_size)]
+        batches = [(start, selected_indices[start:start + batch_size])
+                   for start in range(0, actual_sample_size, batch_size)]
 
         results_list = []
         try:
             with tqdm(total=actual_sample_size, desc="Generating synthetic samples") as pbar:
                 if self.n_jobs == 1:
-                    for batch in batches:
+                    for start, batch in batches:
                         batch_results = [
                             _generate_one_synthetic_point(
                                 idx,
                                 current_data,
                                 neighbors_indices,
-                                self.method
-                            ) for idx in batch
+                                self.method,
+                                None if row_seeds is None else row_seeds[start + offset],
+                            ) for offset, idx in enumerate(batch)
                         ]
                         results_list.extend(batch_results)
                         pbar.update(len(batch_results))
                 else:
-                    with Parallel(n_jobs=self.n_jobs, prefer="processes") as parallel:
-                        for batch in batches:
+                    with Parallel(n_jobs=self.n_jobs, prefer="processes",
+                                  backend="loky" if row_seeds is not None else None) as parallel:
+                        for start, batch in batches:
                             batch_results = parallel(
                                 delayed(_generate_one_synthetic_point)(
                                     idx,
                                     current_data,
                                     neighbors_indices,
-                                    self.method
-                                ) for idx in batch
+                                    self.method,
+                                    None if row_seeds is None else row_seeds[start + offset],
+                                ) for offset, idx in enumerate(batch)
                             )
                             results_list.extend(batch_results)
                             pbar.update(len(batch_results))
@@ -194,30 +212,30 @@ class kNNResampler(object):
         # Using vstack might be slightly faster if results are numpy arrays
         try:
             synthetic_np = vstack(results_list)
-            self.synthetic = DataFrame(synthetic_np, columns=current_data.columns)
+            synthetic = DataFrame(synthetic_np, columns=current_data.columns)
         except Exception as e:
             print(f"Warning: Results from method function might not be uniform NumPy arrays. Creating DataFrame row by row. Error: {e}")
-            self.synthetic = pd.concat([pd.Series(res) for res in results_list], axis=1).T
-            self.synthetic.columns = current_data.columns
-            self.synthetic.index = range(actual_sample_size)
+            synthetic = pd.concat([pd.Series(res) for res in results_list], axis=1).T
+            synthetic.columns = current_data.columns
+            synthetic.index = range(actual_sample_size)
 
         ### Clipping
         if self.clipping:
             # Use stored original min/max values for clipping
             # Ensure columns align
-            for col in self.synthetic.columns:
+            for col in synthetic.columns:
                 if col in self._data_min and col in self._data_max:
-                    self.synthetic[col] = self.synthetic[col].clip(lower=self._data_min[col], upper=self._data_max[col])
+                    synthetic[col] = synthetic[col].clip(lower=self._data_min[col], upper=self._data_max[col])
 
         # Use the same K as for resampling
-        self.data_distances = compute_k_distances(dataN, K=self.K)
-        # For synthetic, normalize using the same scale_factors if normalization was applied
-        if self.normalize:
-            syntheticN = self.synthetic / scale_factors
-        else:
-            syntheticN = self.synthetic.copy()
-        self.synthetic_distances = compute_k_distances(syntheticN, K=self.K)
-        self.metrics = quality_report(current_data, self.synthetic)
+        data_distances = compute_k_distances(dataN, K=self.K)
+        synthetic_distances = compute_k_distances(synthetic / scale if scale is not None else synthetic, K=self.K)
+        metrics = quality_report(current_data, synthetic)
+
+        self.synthetic = synthetic
+        self.data_distances = data_distances
+        self.synthetic_distances = synthetic_distances
+        self.metrics = metrics
 
         self.fitted = True
         print("Synthetic sample generation complete.")
@@ -234,7 +252,7 @@ class kNNResampler(object):
         if not self.fitted or self.synthetic is None:
             print("Model not fitted yet or synthetic data not generated. Call fit() first.")
             return
-        # Compare using the original data passed to __init__
+        # Compare against the same imputed reference used during fitting.
         compareplots(self.data, self.synthetic, variable = variable_list, fig_size = fig_size)
 
     def compareStats(self):

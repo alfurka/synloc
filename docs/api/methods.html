@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Methods &#8212; synloc 1.0.0</title>
+    <title>Methods &#8212; synloc 1.1.0</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
     <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
-    <script src="../_static/documentation_options.js?v=8d563738"></script>
+    <script src="../_static/documentation_options.js?v=fc837d61"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -39,7 +39,7 @@
 methods used in the README examples.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="synloc.LocalCov">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">synloc.</span></span><span class="sig-name descname"><span class="pre">LocalCov</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">K</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clipping</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Args_NearestNeighbors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/dists.html#LocalCov"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.LocalCov" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">synloc.</span></span><span class="sig-name descname"><span class="pre">LocalCov</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">K</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clipping</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Args_NearestNeighbors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/dists.html#LocalCov"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.LocalCov" title="Link to this definition">¶</a></dt>
 <dd><p>This is a <cite>method</cite> for <cite>clusterResampler</cite> class to create synthetic samples from the multivariate normal distribution with the estimated covariance matrix.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -50,6 +50,7 @@ methods used in the README examples.</p>
 <li><p><strong>clipping</strong> (<em>bool</em><em>, </em><em>optional</em>) – trim values greater (smaller) than the maximum (minimum) for each variable, defaults to True</p></li>
 <li><p><strong>n_jobs</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of jobs to run in parallel, defaults to -1</p></li>
 <li><p><strong>Args_NearestNeighbors</strong> (<em>dict</em><em>, </em><em>optional</em>) – <cite>NearestNeighbors</cite> function arguments can be specified if needed. See scikit-learn.org/stable/modules/generated/sklearn.neighbors.NearestNeighbors.html , defaults to {}</p></li>
+<li><p><strong>random_state</strong> (<em>int</em><em>, </em><em>optional</em>) – Optional integer seed for anchor selection and NumPy-based draws.</p></li>
 </ul>
 </dd>
 </dl>
@@ -68,6 +69,17 @@ methods used in the README examples.</p>
 <dd class="field-odd"><p>numpy.darray</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="synloc.LocalCov.prepare_export">
+<span class="sig-name descname"><span class="pre">prepare_export</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_components</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimum_contributors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/dists.html#LocalCov.prepare_export"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.LocalCov.prepare_export" title="Link to this definition">¶</a></dt>
+<dd><p>Select anchors and fit a fixed, reviewable parameter-only export proposal.</p>
+<p><code class="docutils literal notranslate"><span class="pre">n_components=None</span></code> selects all anchors. A smaller positive count
+selects distinct anchors uniformly without replacement. Every selected
+neighbourhood is found in the full source data. <code class="docutils literal notranslate"><span class="pre">minimum_contributors</span></code>
+optionally blocks export if the actual number of rows is insufficient;
+it is not a privacy guarantee.</p>
 </dd></dl>
 
 </dd></dl>
@@ -90,6 +102,45 @@ with the covariance matrix estimated from the clusters.</p>
 </dd>
 </dl>
 <dl class="py method">
+<dt class="sig sig-object py" id="synloc.clusterCov.clearance_report">
+<span class="sig-name descname"><span class="pre">clearance_report</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/dists.html#clusterCov.clearance_report"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.clusterCov.clearance_report" title="Link to this definition">¶</a></dt>
+<dd><p>Return internal JSON-serializable diagnostics, never release approval.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="synloc.clusterCov.columns">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">columns</span></span><a class="headerlink" href="#synloc.clusterCov.columns" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="synloc.clusterCov.covariances_">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">covariances_</span></span><a class="headerlink" href="#synloc.clusterCov.covariances_" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="synloc.clusterCov.export_model">
+<span class="sig-name descname"><span class="pre">export_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">reviewed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/dists.html#clusterCov.export_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.clusterCov.export_model" title="Link to this definition">¶</a></dt>
+<dd><p>Write versioned parameter-only NPZ for an acknowledged research export.</p>
+<p><code class="docutils literal notranslate"><span class="pre">reviewed=True</span></code> acknowledges unresolved privacy review, not approval.
+Failed required contributor checks always block export. Dominance and
+other unresolved diagnostics remain explicit in <code class="docutils literal notranslate"><span class="pre">clearance_report</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="synloc.clusterCov.fit_model">
+<span class="sig-name descname"><span class="pre">fit_model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/dists.html#clusterCov.fit_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.clusterCov.fit_model" title="Link to this definition">¶</a></dt>
+<dd><p>Fit raw-unit mixture parameters without generating synthetic records.</p>
+<p>Scaling affects clustering only. Contributor diagnostics assume one
+person per row; they do not establish privacy or regulatory clearance.
+The legacy <code class="xref py py-meth docutils literal notranslate"><span class="pre">fit()</span></code> workflow remains separate and unchanged.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="synloc.clusterCov.means_">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">means_</span></span><a class="headerlink" href="#synloc.clusterCov.means_" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="synloc.clusterCov.method">
 <span class="sig-name descname"><span class="pre">method</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cluster</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/dists.html#clusterCov.method"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.clusterCov.method" title="Link to this definition">¶</a></dt>
 <dd><p>Creating synthetic values from the estimated multivariate normal distribution.</p>
@@ -109,8 +160,68 @@ with the covariance matrix estimated from the clusters.</p>
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="synloc.clusterCov.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/dists.html#clusterCov.sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.clusterCov.sample" title="Link to this definition">¶</a></dt>
+<dd><p>Sample fitted parameters only, without legacy source-bound clipping.</p>
 </dd></dl>
 
+<dl class="py property">
+<dt class="sig sig-object py" id="synloc.clusterCov.weights_">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">weights_</span></span><a class="headerlink" href="#synloc.clusterCov.weights_" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="synloc.ClusterCovSampler">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">synloc.</span></span><span class="sig-name descname"><span class="pre">ClusterCovSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">means</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariances</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/clusterCovSampler.html#ClusterCovSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.ClusterCovSampler" title="Link to this definition">¶</a></dt>
+<dd><p>Sample a validated mixture without source records or source bounds.</p>
+<p>Loading validates numerical structure, not privacy or release approval.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="synloc.ClusterCovSampler.columns">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">columns</span></span><a class="headerlink" href="#synloc.ClusterCovSampler.columns" title="Link to this definition">¶</a></dt>
+<dd><p>Immutable output column names.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="synloc.ClusterCovSampler.covariances_">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">covariances_</span></span><a class="headerlink" href="#synloc.ClusterCovSampler.covariances_" title="Link to this definition">¶</a></dt>
+<dd><p>Read-only component covariances.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="synloc.ClusterCovSampler.load">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/clusterCovSampler.html#ClusterCovSampler.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.ClusterCovSampler.load" title="Link to this definition">¶</a></dt>
+<dd><p>Load only schema-version 1 NPZ arrays, with pickle disabled.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="synloc.ClusterCovSampler.means_">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">means_</span></span><a class="headerlink" href="#synloc.ClusterCovSampler.means_" title="Link to this definition">¶</a></dt>
+<dd><p>Read-only component means.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="synloc.ClusterCovSampler.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/clusterCovSampler.html#ClusterCovSampler.sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.ClusterCovSampler.sample" title="Link to this definition">¶</a></dt>
+<dd><p>Draw n rows; an integer seed reproduces direct and loaded draws exactly.</p>
+<p>No source min/max clipping or normalization factors are used. Zero rows
+are allowed. <code class="docutils literal notranslate"><span class="pre">random_state</span></code> follows <code class="docutils literal notranslate"><span class="pre">numpy.random.default_rng</span></code>.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="synloc.ClusterCovSampler.weights_">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">weights_</span></span><a class="headerlink" href="#synloc.ClusterCovSampler.weights_" title="Link to this definition">¶</a></dt>
+<dd><p>Read-only component probabilities.</p>
+</dd></dl>
+
+</dd></dl>
+
+<p><code class="docutils literal notranslate"><span class="pre">clusterCov.fit_model()</span></code> is an opt-in parameter-only workflow. It leaves legacy
+<code class="docutils literal notranslate"><span class="pre">fit()</span></code> clipping and diagnostics unchanged. Export requires an explicit research
+review acknowledgement and never establishes privacy approval; see
+<a class="reference internal" href="../usage.html"><span class="doc">Usage</span></a> for the NPZ schema and contributor-review limitations.</p>
 </section>
 
 
@@ -144,9 +255,12 @@ with the covariance matrix estimated from the clusters.</p>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../input_requirements.html">Input requirements</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../model_export.html">Model export and loading</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mixed_cluster.html">Mixed-type clusterCov export</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../metrics.html">Quality metrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../replication.html">Replication materials</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../release_notes.html">Version 1.0 notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../release_notes.html">Version 1.1 notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../release_notes.html#version-1-0-notes">Version 1.0 notes</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API reference</span></p>
 <ul class="current">
@@ -154,6 +268,7 @@ with the covariance matrix estimated from the clusters.</p>
 <li class="toctree-l2"><a class="reference internal" href="resamplers.html">Resamplers</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Methods</a></li>
 <li class="toctree-l2"><a class="reference internal" href="metrics.html">Metrics and utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mixed_cluster.html">Mixed-type clusterCov export</a></li>
 </ul>
 </li>
 </ul>
@@ -185,7 +300,7 @@ with the covariance matrix estimated from the clusters.</p>
       &#169;2026, Ali Furkan Kalay.
       
       |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
       &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
       |

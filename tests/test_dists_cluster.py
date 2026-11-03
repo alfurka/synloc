@@ -77,3 +77,64 @@ def test_clustercov_preserves_cluster_constant_columns_without_clipping():
 
     assert synthetic["cluster_constant"].isin([1.0, 2.0, 3.0]).all()
     assert set(synthetic["cluster_constant"]) == {1.0, 2.0, 3.0}
+
+
+@pytest.mark.parametrize("integer_type", [np.int32, np.int64, np.uint64])
+def test_cluster_accepts_numpy_integer_counts(integer_type):
+    data = pd.DataFrame({"x": [1.0, 2.0, 4.0, 8.0]})
+    sampler = s.clusterCov(data, n_clusters=integer_type(2), size_min=integer_type(2))
+
+    assert sampler.fit(sample_size=integer_type(3)).shape == (3, 1)
+
+
+@pytest.mark.parametrize("value", [True, False, np.bool_(True), np.bool_(False), 1.5])
+@pytest.mark.parametrize("parameter", ["n_clusters", "size_min", "sample_size"])
+def test_cluster_rejects_noninteger_counts(parameter, value):
+    data = pd.DataFrame({"x": [1.0, 2.0, 4.0, 8.0]})
+    kwargs = {"n_clusters": 2, "size_min": 2}
+    if parameter != "sample_size":
+        kwargs[parameter] = value
+    with pytest.raises(ValueError, match=parameter):
+        sampler = s.clusterCov(data, **kwargs)
+        if parameter == "sample_size":
+            sampler.fit(value)
+
+
+def _repeat_cluster_mean(rows, size):
+    return pd.DataFrame(np.repeat([rows.mean().to_numpy()], size, axis=0), columns=rows.columns)
+
+
+@pytest.mark.parametrize("failure", ["callback", "diagnostics"])
+def test_cluster_failed_refit_clears_fitted_results(failure):
+    data = pd.DataFrame({"x": [1.0, 2.0, 4.0, 8.0]})
+    sampler = s.clusterResampler(data, _repeat_cluster_mean, n_clusters=2)
+    sampler.fit(3)
+
+    def invalid_method(rows, size):
+        if failure == "callback":
+            raise ValueError("callback failure")
+        return pd.DataFrame(np.nan, index=range(size), columns=rows.columns)
+
+    sampler.method = invalid_method
+    with pytest.raises(ValueError):
+        sampler.fit(3)
+    assert sampler.fitted is False
+    assert sampler.synthetic is None
+    assert sampler.metrics is None
+    assert sampler.data_distances is None
+    assert sampler.synthetic_distances is None
+    assert sampler.compareStats() is None
+    assert sampler.qualityReport() is None
+
+
+def test_cluster_missing_values_remain_imputed_for_repeat_fit_and_diagnostics():
+    data = pd.DataFrame({"x": [1.0, np.nan, 4.0, 8.0], "y": [2.0, 3.0, 1.0, 5.0]})
+    original = data.copy()
+    sampler = s.clusterResampler(data, _repeat_cluster_mean, n_clusters=2)
+    first = sampler.fit()
+    pd.testing.assert_frame_equal(sampler.fit(), first)
+    pd.testing.assert_frame_equal(data, original)
+    pd.testing.assert_frame_equal(sampler.data, data.fillna(data.median()))
+    report = sampler.qualityReport()
+    pd.testing.assert_frame_equal(sampler.metrics["per_variable"], report["per_variable"])
+    pd.testing.assert_series_equal(sampler.metrics["overall"], report["overall"])

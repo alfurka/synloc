@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Resamplers &#8212; synloc 1.0.0</title>
+    <title>Resamplers &#8212; synloc 1.1.0</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
     <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
-    <script src="../_static/documentation_options.js?v=8d563738"></script>
+    <script src="../_static/documentation_options.js?v=fc837d61"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -161,13 +161,13 @@ sampling from each cluster. The clustering is done by standard KMeans with a heu
 <dl class="py method">
 <dt class="sig sig-object py" id="synloc.clusterResampler.fit">
 <span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/clusterResampler.html#clusterResampler.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.clusterResampler.fit" title="Link to this definition">¶</a></dt>
-<dd><p>Creating synthetic sample.</p>
+<dd><p>Create synthetic data, retaining legacy clipping and diagnostics.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>sample_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Required minimum size. The synthetic sample size will be the cluster size if not specified., defaults to None</p>
+<dd class="field-odd"><p><strong>sample_size</strong> – Requested sample size, or the original row count.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Returns the synthetic sample</p>
+<dd class="field-even"><p>The synthetic sample.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>pandas.DataFrame</p>
@@ -216,9 +216,12 @@ sampling from each cluster. The clustering is done by standard KMeans with a heu
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../input_requirements.html">Input requirements</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../model_export.html">Model export and loading</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mixed_cluster.html">Mixed-type clusterCov export</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../metrics.html">Quality metrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../replication.html">Replication materials</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../release_notes.html">Version 1.0 notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../release_notes.html">Version 1.1 notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../release_notes.html#version-1-0-notes">Version 1.0 notes</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API reference</span></p>
 <ul class="current">
@@ -226,6 +229,7 @@ sampling from each cluster. The clustering is done by standard KMeans with a heu
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Resamplers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="methods.html">Methods</a></li>
 <li class="toctree-l2"><a class="reference internal" href="metrics.html">Metrics and utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mixed_cluster.html">Mixed-type clusterCov export</a></li>
 </ul>
 </li>
 </ul>
@@ -257,7 +261,7 @@ sampling from each cluster. The clustering is done by standard KMeans with a heu
       &#169;2026, Ali Furkan Kalay.
       
       |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
       &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
       |

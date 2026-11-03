@@ -69,3 +69,10 @@ def test_validate_numeric_dataframe_accepts_bool_and_rejects_bad_values():
 
     with pytest.raises(ValueError, match="only missing"):
         validate_numeric_dataframe(pd.DataFrame({"x": [np.nan, np.nan]}))
+
+
+def test_validate_numeric_dataframe_rejects_complex_values_without_truncating():
+    data = pd.DataFrame({"x": [1 + 2j, 3 + 4j]})
+    with pytest.raises(TypeError, match="real numeric"):
+        validate_numeric_dataframe(data)
+    np.testing.assert_array_equal(data["x"].to_numpy(), [1 + 2j, 3 + 4j])

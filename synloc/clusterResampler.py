@@ -8,7 +8,6 @@ from .tools import (
     validate_numeric_dataframe,
 )
 from pandas import DataFrame, Series, concat
-from numpy import sqrt
 import numpy as np
 from sklearn.cluster import KMeans
 
@@ -32,52 +31,39 @@ class clusterResampler(object):
     :param clipping: trim values greater (smaller) than the maximum (minimum) for each variable, defaults to True
     :type clipping: bool, optional
     """
-    def __init__ (self, data:DataFrame, method, n_clusters=8, size_min = None, normalize:bool = True, clipping:bool = True) -> None: 
+    def __init__ (self, data:DataFrame, method, n_clusters=8, size_min = None, normalize:bool = True, clipping:bool = True) -> None:
 
         self.data = validate_numeric_dataframe(data)
         self.method = method
-        self.size_min = size_min
-        if size_min is not None and (not isinstance(size_min, int) or size_min <= 0):
+        if size_min is not None and (
+                isinstance(size_min, (bool, np.bool_)) or
+                not isinstance(size_min, (int, np.integer)) or size_min <= 0):
             raise ValueError("size_min must be a positive integer or None.")
-        if not isinstance(n_clusters, int) or n_clusters <= 0:
+        if (isinstance(n_clusters, (bool, np.bool_)) or
+                not isinstance(n_clusters, (int, np.integer)) or n_clusters <= 0):
             raise ValueError("n_clusters must be a positive integer.")
-        self.n_clusters = n_clusters
+        self.size_min = int(size_min) if size_min is not None else None
+        self.n_clusters = int(n_clusters)
         self.normalize = normalize
         self.clipping = clipping
         self.fitted = False
         self.synthetic = None
         self.metrics = None
 
-    def fit(self, sample_size = None) -> DataFrame:
-        """Creating synthetic sample.
-
-        :param sample_size: Required minimum size. The synthetic sample size will be the cluster size if not specified., defaults to None
-        :type sample_size: int, optional
-        :return: Returns the synthetic sample
-        :rtype: pandas.DataFrame
-        """        
-        ### Assertations
-        if sample_size is not None:
-            if not isinstance(sample_size, int) or sample_size <= 0:
-                raise ValueError("sample_size must be a positive integer")
-
-        ### Checking/Imputing missing values 
+    def _cluster_data(self):
+        """Prepare data and final memberships shared by both fitting workflows."""
 
         current_data = self.data.copy()
         if current_data.isna().any().any():
             print('The original sample has missing values. Missing values are replaced with variable medians.')
             current_data = fill_na_with_median(current_data, show_message=False)
+            # Public diagnostics compare against this same imputed reference.
             self.data = current_data.copy()
 
-        ### Normalizing data set
-
-        if self.normalize:
-            variances = current_data.var().fillna(0.0)
-            variances[variances == 0] = 1 # don't do normalization if the variance is zero.
-            dataN = current_data / sqrt(variances)
-        else: 
-            dataN = current_data.copy()
-        # dataN is the normalized sample to calculate distances - if normalize == True.
+        scale = current_data.std().fillna(0.0) if self.normalize else None
+        if scale is not None:
+            scale = scale.mask(scale == 0, 1)
+        dataN = current_data / scale if scale is not None else current_data
 
         
         ### Find clusters (Heuristic for size_min)
@@ -121,6 +107,29 @@ class clusterResampler(object):
         else:
             cluster_sizes = Series(labels).value_counts()
 
+        return current_data, dataN, scale, labels, cluster_sizes
+
+    def fit(self, sample_size=None) -> DataFrame:
+        """Create synthetic data, retaining legacy clipping and diagnostics.
+
+        :param sample_size: Requested sample size, or the original row count.
+        :return: The synthetic sample.
+        :rtype: pandas.DataFrame
+        """
+        if sample_size is not None:
+            if (isinstance(sample_size, (bool, np.bool_)) or
+                    not isinstance(sample_size, (int, np.integer)) or sample_size <= 0):
+                raise ValueError("sample_size must be a positive integer")
+            sample_size = int(sample_size)
+
+        self.fitted = False
+        self.synthetic = None
+        self.metrics = None
+        self.data_distances = None
+        self.synthetic_distances = None
+
+        current_data, dataN, scale, labels, cluster_sizes = self._cluster_data()
+
         if sample_size is not None:
             cluster_sizes = new_cluster_sizes(cluster_sizes, sample_size)
 
@@ -137,21 +146,19 @@ class clusterResampler(object):
         if not syn_samples:
             raise ValueError("Synthetic sample generation failed because no non-empty clusters were available.")
 
-        self.synthetic = concat(syn_samples, axis=0, ignore_index=True)
+        synthetic = concat(syn_samples, axis=0, ignore_index=True)
         ### Clipping
         if self.clipping:
-            self.synthetic = self.synthetic.clip(lower=current_data.min(), upper=current_data.max(), axis=1)
+            synthetic = synthetic.clip(lower=current_data.min(), upper=current_data.max(), axis=1)
 
-        # Use the same normalization as above
-        
-        self.data_distances = compute_k_distances(dataN, K=self.size_min)
-        # For synthetic, normalize using the same varMatrix if normalization was applied
-        if self.normalize:
-            syntheticN = self.synthetic / sqrt(variances)
-        else:
-            syntheticN = self.synthetic.copy()
-        self.synthetic_distances = compute_k_distances(syntheticN, K=self.size_min)
-        self.metrics = quality_report(current_data, self.synthetic)
+        data_distances = compute_k_distances(dataN, K=self.size_min)
+        synthetic_distances = compute_k_distances(synthetic / scale if scale is not None else synthetic, K=self.size_min)
+        metrics = quality_report(current_data, synthetic)
+
+        self.synthetic = synthetic
+        self.data_distances = data_distances
+        self.synthetic_distances = synthetic_distances
+        self.metrics = metrics
 
         self.fitted = True
         return self.synthetic

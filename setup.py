@@ -8,7 +8,7 @@ with open(os.path.join(this_dir, "README.md"), encoding='utf-8') as f:
 
 setup(
     name="synloc",
-    version="1.0.0",
+    version="1.1.0",
     author="Ali Furkan Kalay",
     author_email="alfurka@gmail.com",
     url="https://github.com/alfurka/synloc",  

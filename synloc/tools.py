@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from pandas.api.types import is_bool_dtype, is_numeric_dtype
+from pandas.api.types import is_bool_dtype, is_complex_dtype, is_numeric_dtype
 from scipy.stats import ks_2samp, wasserstein_distance
 from sklearn.neighbors import NearestNeighbors
 from numpy import random, floor, sin, cos, pi, square
@@ -10,7 +10,7 @@ from pandas import DataFrame, Series
 def validate_numeric_dataframe(dataframe, name="data"):
     """Validate and return a clean numeric DataFrame copy.
 
-    ``synloc`` expects tabular numeric data. Categorical variables should be
+    ``synloc`` expects tabular real numeric data. Categorical variables should be
     encoded before calling the resamplers. Boolean dummy columns are accepted
     and converted to 0/1 numeric values.
     """
@@ -30,6 +30,8 @@ def validate_numeric_dataframe(dataframe, name="data"):
         dtype = cleaned[column].dtype
         if is_bool_dtype(dtype):
             cleaned[column] = cleaned[column].astype(int)
+        elif is_complex_dtype(dtype):
+            raise TypeError(f"{name} contains complex column {column}; real numeric values are required.")
         elif not is_numeric_dtype(dtype):
             non_numeric.append(column)
 
