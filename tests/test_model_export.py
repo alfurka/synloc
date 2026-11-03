@@ -1,5 +1,3 @@
-import json
-
 import numpy as np
 import pandas as pd
 import pytest
@@ -18,7 +16,7 @@ def test_roundtrip_seeded_equality_and_parameter_only_schema(tmp_path):
     assert model.fit_model() is model
     assert model.synthetic is None
     path = tmp_path / "mixture.npz"
-    model.export_model(path, reviewed=True)
+    model.export_model(path)
     loaded = ClusterCovSampler.load(path)
     direct = model.sample(123, random_state=74)
     pd.testing.assert_frame_equal(direct, loaded.sample(123, random_state=74), check_exact=True)
@@ -36,8 +34,8 @@ def test_roundtrip_seeded_equality_and_parameter_only_schema(tmp_path):
 def test_moments_are_raw_units_weights_are_final_memberships():
     data = source_data()
     model = clusterCov(data, n_clusters=4, size_min=20).fit_model()
-    report = model.clearance_report()
-    counts = np.array([item["count"] for item in report["components"]])
+    diagnostics = model.disclosure_diagnostics()
+    counts = diagnostics["count"].to_numpy()
     assert counts.sum() == len(data)
     assert counts.min() >= 20
     np.testing.assert_array_equal(model.weights_, counts / len(data))
@@ -45,7 +43,7 @@ def test_moments_are_raw_units_weights_are_final_memberships():
     # Earnings and hours have identical standardized coordinates, not raw moments.
     np.testing.assert_allclose(model.means_[:, 0], 1000 * model.means_[:, 1])
     np.testing.assert_array_equal(model.covariances_[:, 2, :], 0)
-    assert all(item["empirical_rank"] == 1 for item in report["components"])
+    assert diagnostics["rank"].eq(1).all()
     assert np.isfinite(model.sample(20, 0).to_numpy()).all()
 
 
@@ -68,63 +66,33 @@ def test_rejects_invalid_sample_sizes(n):
 def test_singleton_and_singular_components_roundtrip(tmp_path):
     model = clusterCov(pd.DataFrame({"x": [7.0], "y": [0.1]}), n_clusters=1, size_min=1).fit_model()
     path = tmp_path / "singleton"
-    model.export_model(path, reviewed=True)
+    model.export_model(path)
     draws = ClusterCovSampler.load(path).sample(10, 9)
     np.testing.assert_array_equal(draws, np.tile([7, 0.1], (10, 1)))
-    assert model.clearance_report()["components"][0]["empirical_rank"] == 0
+    assert model.disclosure_diagnostics().loc[0, "rank"] == 0
     singular = ClusterCovSampler([[0, 0]], [[[1, 1], [1, 1]]], [1], ["a", "b"])
     sample = singular.sample(20, 7)
     np.testing.assert_allclose(sample.a, sample.b)
 
 
-def test_clearance_is_honest_json_and_not_exported(tmp_path):
+def test_disclosure_diagnostics_report_shares_without_thresholds():
     data = pd.DataFrame({"zero": [0.0] * 4, "signed": [-1.0, 0, 1, 2], "dominated": [100.0, 0, 0, 0]})
     model = clusterCov(data, n_clusters=1, size_min=3).fit_model()
-    report = model.clearance_report()
-    json.dumps(report, allow_nan=False)
-    assert report["mechanical_validity"]["status"] == "passed"
-    assert report["privacy_approved"] is False
-    assert report["required_contributor_check"]["status"] == "passed"
-    dominance = report["components"][0]["dominance"]
-    assert dominance["zero"] == {"status": "unassessed", "reason": "zero_total"}
-    assert dominance["signed"]["status"] == "not_applicable"
-    assert dominance["dominated"]["status"] == "failed"
-    report["components"].clear()
-    assert len(model.clearance_report()["components"]) == 1
-    path = tmp_path / "research.npz"
-    with pytest.raises(ValueError, match="reviewed=True"):
-        model.export_model(path)
-    assert not path.exists()
-    with pytest.raises(ValueError, match="reviewed=True"):
-        model.export_model(path, reviewed="yes")
-    # Unresolved dominance review is acknowledged, not silently called approval.
-    model.export_model(path, reviewed=True)
-    assert model.clearance_report()["privacy_approved"] is False
-
-
-def test_unconfigured_contributor_minimum_is_unassessed():
-    model = clusterCov(source_data(), n_clusters=1).fit_model()
-    assert model.clearance_report()["required_contributor_check"]["status"] == "unassessed"
-
-
-def test_failed_required_contributor_check_blocks_even_reviewed(tmp_path, monkeypatch):
-    data = source_data().iloc[:4]
-    model = clusterCov(data, n_clusters=2, size_min=3)
-    # Simulate final memberships violating the requirement: the export gate must
-    # inspect actual memberships independently of the reassignment heuristic.
-    monkeypatch.setattr(model, "_cluster_data", lambda: (
-        data, data, None, np.array([0, 0, 1, 1]), pd.Series([2, 2], index=[0, 1])
-    ))
-    model.fit_model()
-    assert model.clearance_report()["required_contributor_check"]["status"] == "failed"
-    with pytest.raises(ValueError, match="contributor"):
-        model.export_model(tmp_path / "blocked.npz", reviewed=True)
-    assert not (tmp_path / "blocked.npz").exists()
+    diagnostics = model.disclosure_diagnostics()
+    assert diagnostics.loc[0, "count"] == 4
+    assert diagnostics.loc[0, "constant_columns"] == ("zero",)
+    # Shares are undefined for a zero total or negative values.
+    undefined = ["top1_share_zero", "top2_share_zero", "top1_share_signed", "top2_share_signed"]
+    assert np.isnan(diagnostics.loc[0, undefined].to_numpy(dtype=float)).all()
+    assert diagnostics.loc[0, "top1_share_dominated"] == 1.0
+    assert diagnostics.loc[0, "top2_share_dominated"] == 1.0
+    diagnostics.loc[0, "count"] = 99
+    assert model.disclosure_diagnostics().loc[0, "count"] == 4
 
 
 def test_unfitted_methods_reject_use(tmp_path):
     model = clusterCov(source_data())
-    for operation in [lambda: model.sample(2), model.clearance_report, lambda: model.export_model(tmp_path / "x")]:
+    for operation in [lambda: model.sample(2), model.disclosure_diagnostics, lambda: model.export_model(tmp_path / "x")]:
         with pytest.raises(RuntimeError, match="fit_model"):
             operation()
 
@@ -206,10 +174,9 @@ def test_model_imputes_before_estimating_raw_moments():
     data = pd.DataFrame({"x": [1.0, np.nan, 3.0, 4.0], "constant": [2.0] * 4})
     model = clusterCov(data, n_clusters=1, size_min=3, normalize=False).fit_model()
     np.testing.assert_array_equal(model.means_[0], [2.75, 2.0])
-    dominance = model.clearance_report()["components"][0]["dominance"]
-    assert dominance["constant"]["status"] == "passed"
-    assert dominance["constant"]["top_one_share"] == 0.25
-    assert dominance["constant"]["top_two_share"] == 0.5
+    diagnostics = model.disclosure_diagnostics()
+    assert diagnostics.loc[0, "top1_share_constant"] == 0.25
+    assert diagnostics.loc[0, "top2_share_constant"] == 0.5
 
 
 @pytest.mark.parametrize("fitted_model", [False, True])
@@ -231,7 +198,7 @@ def test_parameter_state_cannot_diverge_from_sampling_or_export(tmp_path, fitted
         model.columns = ("replacement",)
     path = tmp_path / "immutable.npz"
     if fitted_model:
-        model.export_model(path, reviewed=True)
+        model.export_model(path)
     else:
         model._export(path)
     pd.testing.assert_frame_equal(model.sample(20, 73), expected, check_exact=True)

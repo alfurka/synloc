@@ -28,27 +28,21 @@ def test_selected_components_use_full_data_and_original_units(normalize):
         jitter = max(np.trace(raw_cov) / 2, 1.0) * 1e-10
         np.testing.assert_allclose(proposal.covariances_[j, :2, :2], raw_cov + np.eye(2) * jitter)
         np.testing.assert_array_equal(proposal.covariances_[j, 2], 0)
-    assert [item['count'] for item in proposal.clearance_report()['components']] == [3, 3]
-    assert proposal.clearance_report()['required_contributor_check']['status'] == 'unassessed'
+    assert proposal.disclosure_diagnostics()["count"].tolist() == [3, 3]
 
 
-def test_export_roundtrip_and_report_are_for_fixed_selection(tmp_path):
+def test_export_roundtrip_and_diagnostics_are_for_fixed_selection(tmp_path):
     frame = data()
     model = LocalCov(frame, K=3, n_jobs=1)
-    proposal = model.prepare_export(4, random_state=9, minimum_contributors=3)
+    proposal = model.prepare_export(4, random_state=9)
     expected = proposal.sample(250, random_state=7)
-    report = proposal.clearance_report()
-    assert report['privacy_approved'] is False
-    assert report['required_contributor_check']['status'] == 'passed'
-    assert len(report['components']) == 4
-    report['components'].clear()
-    assert len(proposal.clearance_report()['components']) == 4
+    diagnostics = proposal.disclosure_diagnostics()
+    assert diagnostics["count"].tolist() == [3, 3, 3, 3]
+    diagnostics.loc[0, "count"] = 99
+    assert proposal.disclosure_diagnostics().loc[0, "count"] == 3
     path = tmp_path / 'model.npz'
-    with pytest.raises(ValueError, match='reviewed=True'):
-        proposal.export_model(path)
-    assert not path.exists()
     del model, frame
-    proposal.export_model(path, reviewed=True)
+    proposal.export_model(path)
     loaded = ClusterCovSampler.load(path)
     pd.testing.assert_frame_equal(loaded.sample(250, random_state=7), expected, check_exact=True)
     with np.load(path, allow_pickle=False) as archive:
@@ -62,32 +56,20 @@ def test_all_components_default_and_singleton_neighbourhoods():
     np.testing.assert_array_equal(proposal.means_, frame.to_numpy())
     np.testing.assert_array_equal(proposal.covariances_, np.zeros((len(frame), 3, 3)))
     np.testing.assert_allclose(proposal.weights_, np.full(len(frame), 1 / len(frame)))
-    assert all(item['count'] == 1 for item in proposal.clearance_report()['components'])
-    assert proposal.clearance_report()['components'][0]['dominance']['x']['status'] == 'failed'
+    diagnostics = proposal.disclosure_diagnostics()
+    assert diagnostics["count"].eq(1).all() and diagnostics["rank"].eq(0).all()
+    assert diagnostics["top1_share_x"].eq(1.0).all()
 
 
-def test_actual_neighbour_count_and_contributor_gate(tmp_path):
-    proposal = LocalCov(data(), K=30, n_jobs=1).prepare_export(2, random_state=0, minimum_contributors=7)
-    report = proposal.clearance_report()
-    assert report['required_contributor_check']['status'] == 'failed'
-    assert report['required_contributor_check']['failed_components'] == [0, 1]
-    assert [component['count'] for component in report['components']] == [6, 6]
-    path = tmp_path / 'blocked.npz'
-    with pytest.raises(ValueError, match='contributor'):
-        proposal.export_model(path, reviewed=True)
-    assert not path.exists()
+def test_neighbourhood_count_is_capped_by_source_rows():
+    proposal = LocalCov(data(), K=30, n_jobs=1).prepare_export(2, random_state=0)
+    assert proposal.disclosure_diagnostics()["count"].tolist() == [6, 6]
 
 
 @pytest.mark.parametrize('count', [0, -1, 7, 1.5, True, '2'])
 def test_rejects_invalid_component_counts(count):
     with pytest.raises(ValueError, match='n_components'):
         LocalCov(data(), K=2, n_jobs=1).prepare_export(count)
-
-
-@pytest.mark.parametrize('minimum', [0, -1, 2.5, True, '2'])
-def test_rejects_invalid_minimum_contributors(minimum):
-    with pytest.raises(ValueError, match='minimum_contributors'):
-        LocalCov(data(), K=2, n_jobs=1).prepare_export(2, minimum_contributors=minimum)
 
 
 def test_custom_metric_and_missing_value_imputation():
@@ -123,7 +105,7 @@ def test_legacy_and_export_preserve_decimal_constants(method, varying):
     assert fitted.sample(20, random_state=4)["constant"].eq(0.1).all()
 
 
-def test_proposal_parameters_cannot_diverge_from_reviewed_export(tmp_path):
+def test_proposal_parameters_cannot_diverge_from_export(tmp_path):
     proposal = LocalCov(data(), K=3, n_jobs=1).prepare_export(2, random_state=7)
     expected = proposal.sample(20, random_state=4)
     for name in ("means_", "covariances_", "weights_"):
@@ -135,7 +117,7 @@ def test_proposal_parameters_cannot_diverge_from_reviewed_export(tmp_path):
     with pytest.raises(AttributeError):
         proposal.columns = ("wrong",)
     path = tmp_path / "fixed.npz"
-    proposal.export_model(path, reviewed=True)
+    proposal.export_model(path)
     pd.testing.assert_frame_equal(
         expected, ClusterCovSampler.load(path).sample(20, random_state=4),
         check_exact=True,

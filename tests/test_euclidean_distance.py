@@ -36,7 +36,7 @@ def test_cluster_parameters_follow_euclidean_groups_in_original_units(normalize,
     np.testing.assert_allclose(model.means_[np.argsort(model.means_[:, 0])], expected[np.argsort(expected[:, 0])])
     np.testing.assert_allclose(model.weights_ @ model.means_, data.mean())
     path = tmp_path / "mixture.npz"
-    model.export_model(path, reviewed=True)
+    model.export_model(path)
     pd.testing.assert_frame_equal(model.sample(50, 7), ClusterCovSampler.load(path).sample(50, 7), check_exact=True)
 
 
@@ -48,7 +48,7 @@ def test_singular_and_constant_columns_keep_sampling_in_original_units(normalize
     np.testing.assert_allclose(model.covariances_[0, :2, :2], data.iloc[:, :2].cov(), rtol=2e-5)
     assert model.sample(10, 42)["constant"].eq(9).all()
     path = tmp_path / "singular.npz"
-    model.export_model(path, reviewed=True)
+    model.export_model(path)
     pd.testing.assert_frame_equal(model.sample(20, 2), ClusterCovSampler.load(path).sample(20, 2))
     assert np.isfinite(LocalCov(data, K=2, n_jobs=1, normalize=normalize).fit().to_numpy()).all()
 
@@ -58,7 +58,7 @@ def test_identical_single_record_and_final_minimum_cluster_size():
     model = clusterCov(one, n_clusters=1, size_min=1).fit_model()
     np.testing.assert_allclose(model.sample(5, 4), np.tile([7., 2.], (5, 1)))
     fitted = clusterCov(correlated_data(), n_clusters=10, size_min=15).fit_model()
-    assert all(c["count"] >= 15 for c in fitted.clearance_report()["components"])
+    assert fitted.disclosure_diagnostics()["count"].ge(15).all()
 
 
 def test_custom_neighbour_metric_remains_available():

@@ -43,10 +43,8 @@ Export a cluster model
        data, n_clusters=20, size_min=20
    ).fit_model()
    # Inspect internally before export.
-   report = model.clearance_report()
-
-   # Acknowledges unresolved review; does not certify privacy.
-   model.export_model("cluster-model.npz", reviewed=True)
+   diagnostics = model.disclosure_diagnostics()
+   model.export_model("cluster-model.npz")
 
 Weights reflect the final source cluster sizes, not a requested synthetic
 sample size.
@@ -61,21 +59,15 @@ export that proposal, not the original resampler.
 .. code-block:: python
 
    local = sl.LocalCov(data, K=100, normalize=True)
-   proposal = local.prepare_export(
-       n_components=50,
-       random_state=42,
-       minimum_contributors=100,
-   )
+   proposal = local.prepare_export(n_components=50, random_state=42)
    # Inspect the selected components.
-   report = proposal.clearance_report()
-   proposal.export_model("local-model.npz", reviewed=True)
+   diagnostics = proposal.disclosure_diagnostics()
+   proposal.export_model("local-model.npz")
 
 * ``K=100``: up to 100 source rows per neighbourhood.
 * ``n_components=50``: export 50 mean/covariance pairs with equal weights.
   ``None`` (the default) uses every row as an anchor.
 * ``random_state=42``: seed for selecting anchors, not for later sampling.
-* ``minimum_contributors=100``: optional; export is blocked if any selected
-  neighbourhood has fewer source rows.
 
 Fewer components change the fitted mixture; they do not guarantee privacy.
 All-component exports can be large: covariance storage grows with
@@ -103,8 +95,8 @@ What the file contains
 ----------------------
 
 The version-1 NPZ stores only ``version``, ``column_names``, ``weights``,
-``means`` and ``covariances``. It excludes source rows, memberships, explicit
-contributor counts, source minima/maxima and the internal review report.
+``means`` and ``covariances``. It excludes source rows, memberships, counts,
+source minima/maxima and the disclosure diagnostics.
 
 Means and covariances are in **original units**. Normalization affects only
 neighbour or cluster selection, so no scaling factors are needed when loading.
@@ -114,11 +106,21 @@ negative or otherwise outside the source range. Fitted parameters are read-only.
 Before releasing a model
 ------------------------
 
-``clearance_report()`` is internal evidence, not a clearance certificate.
-``reviewed=True`` acknowledges unresolved disclosure review; it does not grant
-release approval or override a failed required contributor-count check. Counts
-refer to rows, not verified unique people. Keep the report separate from the
-export unless it has its own release review.
+``disclosure_diagnostics()`` returns one row per component, in the same order
+as ``means_``:
+
+* ``count``: source rows in the component.
+* ``rank``: rank of the component's centred rows. A low rank means the
+  component is close to a few records.
+* ``constant_columns``: variables with one shared value in the component.
+* ``top1_share_<column>`` and ``top2_share_<column>``: the largest one and two
+  values as shares of the component total; ``NaN`` if the variable has negative
+  values or a zero total.
+
+The diagnostics are computed from the source rows, so keep them confidential;
+they are not written to the exported file. They apply no thresholds and do not
+establish privacy: apply your own disclosure rules before releasing a model.
+Counts refer to rows, not verified unique people.
 
 Loading validates the numerical format with pickle disabled, **not privacy**.
 Means, covariances, weights, overlapping neighbourhoods and repeated exports can

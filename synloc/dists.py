@@ -1,7 +1,6 @@
 from .kNNResampler import kNNResampler
 from .clusterResampler import clusterResampler
 from .clusterCovSampler import ClusterCovSampler
-from copy import deepcopy
 from scipy.stats import multivariate_normal
 from pandas import DataFrame
 import numpy as np
@@ -30,8 +29,8 @@ def _local_constant_mask(data):
     """Return columns that are exactly constant in this local sample."""
     return data.max(axis=0).to_numpy(dtype=float) == data.min(axis=0).to_numpy(dtype=float)
 
-def _component_parameters(data, component):
-    """Fit one Gaussian and calculate internal diagnostics from its rows."""
+def _component_parameters(data):
+    """Fit one Gaussian and summarize its source rows for disclosure review."""
     columns = list(data.columns)
     constant = _local_constant_mask(data)
     varying = np.flatnonzero(~constant)
@@ -40,35 +39,25 @@ def _component_parameters(data, component):
     covariance = np.zeros((len(columns), len(columns)))
     if varying.size:
         covariance[np.ix_(varying, varying)] = _regularized_covariance(data.iloc[:, varying])
-    dominance = {}
+    top_one, top_two = {}, {}
     for name in columns:
-        values = data[name].to_numpy(dtype=float)
-        if np.any(values < 0):
-            dominance[name] = {"status": "not_applicable", "reason": "negative_values"}
-            continue
-        maximum = float(values.max())
-        if maximum == 0:
-            dominance[name] = {"status": "unassessed", "reason": "zero_total"}
-            continue
-        shares = np.sort(values / maximum)
-        total = float(shares.sum())
-        top_one = float(shares[-1] / total)
-        top_two = float(shares[-2:].sum() / total)
-        dominance[name] = {
-            "status": "passed" if top_one <= 0.50 and top_two <= 0.67 else "failed",
-            "top_one_share": top_one,
-            "top_two_share": top_two,
-            "one_50_passed": bool(top_one <= 0.50),
-            "two_67_passed": bool(top_two <= 0.67),
-        }
+        values = np.sort(data[name].to_numpy(dtype=float))[::-1]
+        total = values.sum()
+        assessable = values[-1] >= 0 and total > 0
+        top_one["top1_share_" + name] = values[0] / total if assessable else np.nan
+        top_two["top2_share_" + name] = values[:2].sum() / total if assessable else np.nan
     diagnostics = {
-        "component": component,
-        "count": int(len(data)),
-        "empirical_rank": int(np.linalg.matrix_rank(data.to_numpy(dtype=float) - mean)),
-        "constant_columns": [name for name, flag in zip(columns, constant) if flag],
-        "dominance": dominance,
+        "count": len(data),
+        "rank": int(np.linalg.matrix_rank(data.to_numpy(dtype=float) - mean)),
+        "constant_columns": tuple(name for name, flag in zip(columns, constant) if flag),
+        **top_one,
+        **top_two,
     }
     return mean, covariance, diagnostics
+
+def _diagnostics_frame(rows):
+    """One row per component, in the same order as the fitted means."""
+    return DataFrame(rows).rename_axis("component")
 
 def _draw_local_normal(data, size=None):
     """Draw from local covariance while preserving locally constant columns."""
@@ -102,11 +91,11 @@ def _draw_local_normal(data, size=None):
     return draws
 
 class _LocalCovExport:
-    """A fixed set of local components and its internal disclosure evidence."""
+    """A fixed set of selected local components and their diagnostics."""
 
-    def __init__(self, model, report):
+    def __init__(self, model, diagnostics):
         self._model = model
-        self._report = report
+        self._diagnostics = diagnostics
 
     @property
     def means_(self):
@@ -124,20 +113,16 @@ class _LocalCovExport:
     def columns(self):
         return self._model.columns
 
-    def clearance_report(self):
-        """Return internal diagnostics, not a privacy or release approval."""
-        return deepcopy(self._report)
+    def disclosure_diagnostics(self):
+        """Return per-component source diagnostics; see :meth:`clusterCov.disclosure_diagnostics`."""
+        return self._diagnostics.copy()
 
     def sample(self, n, random_state=None):
         """Sample the selected parameter mixture without source-bound clipping."""
         return self._model.sample(n, random_state=random_state)
 
-    def export_model(self, path, *, reviewed=False):
-        """Write the reviewed proposal; failed required contributor checks block export."""
-        if self._report["required_contributor_check"]["status"] == "failed":
-            raise ValueError("Export blocked by failed required contributor checks.")
-        if reviewed is not True:
-            raise ValueError("Export requires reviewed=True to acknowledge unresolved privacy review.")
+    def export_model(self, path):
+        """Write the selected parameters to a versioned NPZ file."""
         self._model._export(path)
 
 
@@ -173,14 +158,12 @@ class LocalCov(kNNResampler):
     def __init__(self, data:DataFrame, K:int=30, normalize:bool=True, clipping:bool=True, n_jobs:int=-1, Args_NearestNeighbors:dict={}, random_state=None):
         super().__init__(data, self.method, K, normalize, clipping, n_jobs, Args_NearestNeighbors, random_state=random_state)
 
-    def prepare_export(self, n_components=None, random_state=None, *, minimum_contributors=None):
-        """Select anchors and fit a fixed, reviewable parameter-only export proposal.
+    def prepare_export(self, n_components=None, random_state=None):
+        """Select anchors and fit a fixed parameter-only export proposal.
 
         ``n_components=None`` selects all anchors. A smaller positive count
         selects distinct anchors uniformly without replacement. Every selected
-        neighbourhood is found in the full source data. ``minimum_contributors``
-        optionally blocks export if the actual number of rows is insufficient;
-        it is not a privacy guarantee.
+        neighbourhood is found in the full source data.
         """
         n = len(self.data)
         if n_components is None:
@@ -188,10 +171,6 @@ class LocalCov(kNNResampler):
         if (isinstance(n_components, (bool, np.bool_)) or
                 not isinstance(n_components, (int, np.integer)) or not 1 <= n_components <= n):
             raise ValueError("n_components must be an integer between 1 and the number of rows.")
-        if minimum_contributors is not None and (
-                isinstance(minimum_contributors, (bool, np.bool_)) or
-                not isinstance(minimum_contributors, (int, np.integer)) or minimum_contributors < 1):
-            raise ValueError("minimum_contributors must be a positive integer or None.")
         columns = list(self.data.columns)
         if any(not isinstance(name, str) for name in columns):
             raise ValueError("Model export requires string column names.")
@@ -214,37 +193,14 @@ class LocalCov(kNNResampler):
             search = NearestNeighbors(n_neighbors=k, **args).fit(transformed)
             neighbours = search.kneighbors(transformed.iloc[anchors], return_distance=False)
 
-        means, covariances, components = [], [], []
-        for component, indices in enumerate(neighbours):
-            mean, covariance, diagnostics = _component_parameters(data.iloc[indices], component)
+        means, covariances, rows = [], [], []
+        for indices in neighbours:
+            mean, covariance, row = _component_parameters(data.iloc[indices])
             means.append(mean)
             covariances.append(covariance)
-            components.append(diagnostics)
+            rows.append(row)
         model = ClusterCovSampler(means, covariances, np.full(n_components, 1.0 / n_components), columns)
-        failed = [item["component"] for item in components
-                  if minimum_contributors is not None and item["count"] < minimum_contributors]
-        report = {
-            "mechanical_validity": {"status": "passed", "schema_version": model.VERSION},
-            "privacy_approved": False,
-            "required_contributor_check": {
-                "status": "failed" if failed else ("unassessed" if minimum_contributors is None else "passed"),
-                "minimum_rows": int(minimum_contributors) if minimum_contributors is not None else None,
-                "unit": "row; assumes one person per row",
-                "failed_components": failed,
-            },
-            "research_export_eligible": not failed,
-            "review_required": True,
-            "components": components,
-            "review_limitations": [
-                "This internal report is not regulatory clearance or a privacy guarantee.",
-                "Contributor counts are rows, not verified unique persons; households and linked records require review.",
-                "Neighbourhoods overlap; released parameters and repeated exports can jointly disclose information.",
-                "Means, covariance entries, constant columns and repeated sampling require separate review.",
-                "Nonnegative-variable 1/50 and 2/67 dominance checks are diagnostics, not covariance checks.",
-                "This source-derived report must not accompany an export without separate review.",
-            ],
-        }
-        return _LocalCovExport(model, report)
+        return _LocalCovExport(model, _diagnostics_frame(rows))
 
 
 class clusterCov(clusterResampler):
@@ -266,63 +222,34 @@ class clusterCov(clusterResampler):
     def __init__(self, data:DataFrame, n_clusters=8, size_min:int = None, normalize:bool = True, clipping:bool = True) -> None:
         super().__init__(data, method=self.method, n_clusters=n_clusters, size_min=size_min, normalize=normalize, clipping=clipping)
         self._model = None
-        self._clearance = None
+        self._diagnostics = None
 
     def fit_model(self):
         """Fit raw-unit mixture parameters without generating synthetic records.
 
-        Scaling affects clustering only. Contributor diagnostics assume one
-        person per row; they do not establish privacy or regulatory clearance.
-        The legacy :meth:`fit` workflow remains separate and unchanged.
+        Normalization affects clustering only; means and covariances are in
+        original units. The legacy :meth:`fit` workflow remains unchanged.
         """
         self._model = None
-        self._clearance = None
+        self._diagnostics = None
         current_data, _, _, labels, sizes = self._cluster_data()
         columns = list(current_data.columns)
         if any(not isinstance(name, str) for name in columns):
             raise ValueError("Model export requires string column names.")
-        means, covariances, components = [], [], []
-        for component, label in enumerate(sizes.index):
-            mean, covariance, diagnostics = _component_parameters(current_data[labels == label], component)
+        means, covariances, rows = [], [], []
+        for label in sizes.index:
+            mean, covariance, row = _component_parameters(current_data[labels == label])
             means.append(mean)
             covariances.append(covariance)
-            components.append(diagnostics)
+            rows.append(row)
         weights = sizes.to_numpy(dtype=float) / len(current_data)
-        model = ClusterCovSampler(means, covariances, weights, columns)
-        failed = [
-            item["component"] for item in components
-            if self.size_min is not None and item["count"] < self.size_min
-        ]
-        self._clearance = {
-            "mechanical_validity": {"status": "passed", "schema_version": model.VERSION},
-            "privacy_approved": False,
-            "required_contributor_check": {
-                "status": "failed" if failed else ("unassessed" if self.size_min is None else "passed"),
-                "minimum_rows": self.size_min,
-                "unit": "row; assumes one person per row",
-                "failed_components": failed,
-            },
-            "research_export_eligible": not failed,
-            "review_required": True,
-            "components": components,
-            "review_limitations": [
-                "This is an internal diagnostic report, not regulatory clearance or a privacy guarantee.",
-                "Contributor counts are rows, not verified unique persons; repeated persons require separate review.",
-                "Household dependencies and linked records are not assessed by row counts.",
-                "Covariance entries, cross-products and joint parameter disclosure require separate review.",
-                "Mixture weights can leak cluster counts, especially when the source sample size is known.",
-                "Nonnegative-variable 1/50 and 2/67 dominance checks are diagnostics only; negative values are not applicable and zero totals are unassessed.",
-                "Constant columns, small or singular components, and repeated sampling can disclose fitted parameters.",
-                "Parameter-only export and a reviewed acknowledgement do not authorize confidential-data release.",
-                "This report contains source-derived counts and diagnostics and must not accompany an export without separate review.",
-            ],
-        }
-        self._model = model
+        self._model = ClusterCovSampler(means, covariances, weights, columns)
+        self._diagnostics = _diagnostics_frame(rows)
         return self
 
     def _require_model(self):
         if self._model is None:
-            raise RuntimeError("Call fit_model() before sampling, reporting or exporting.")
+            raise RuntimeError("Call fit_model() before sampling, diagnostics or exporting.")
         return self._model
 
     @property
@@ -345,24 +272,22 @@ class clusterCov(clusterResampler):
         """Sample fitted parameters only, without legacy source-bound clipping."""
         return self._require_model().sample(n, random_state=random_state)
 
-    def clearance_report(self):
-        """Return internal JSON-serializable diagnostics, never release approval."""
-        self._require_model()
-        return deepcopy(self._clearance)
+    def disclosure_diagnostics(self):
+        """Return per-component diagnostics computed from the source rows.
 
-    def export_model(self, path, *, reviewed=False):
-        """Write versioned parameter-only NPZ for an acknowledged research export.
-
-        ``reviewed=True`` acknowledges unresolved privacy review, not approval.
-        Failed required contributor checks always block export. Dominance and
-        other unresolved diagnostics remain explicit in ``clearance_report``.
+        One row per component, in the order of ``means_``: ``count`` (source
+        rows), ``rank`` (rank of the centred rows), ``constant_columns``, and
+        ``top1_share_<column>``/``top2_share_<column>`` (largest one and two
+        values as shares of the component total; ``NaN`` for negative values or
+        a zero total). The diagnostics are confidential, are not exported, apply
+        no thresholds and do not establish privacy.
         """
-        model = self._require_model()
-        if self._clearance["required_contributor_check"]["status"] == "failed":
-            raise ValueError("Export blocked by failed required contributor checks.")
-        if reviewed is not True:
-            raise ValueError("Export requires reviewed=True to acknowledge unresolved privacy review.")
-        model._export(path)
+        self._require_model()
+        return self._diagnostics.copy()
+
+    def export_model(self, path):
+        """Write the fitted parameters to a versioned NPZ file."""
+        self._require_model()._export(path)
         
     def method(self, cluster:DataFrame, size:int):
         """Creating synthetic values from the estimated multivariate normal distribution. 

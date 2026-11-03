@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added optional parameter-only model fitting, export and independent sampling for `clusterCov` and `LocalCov`; `LocalCov.prepare_export()` can select all components or a reproducible subset while finding neighbours in the full input.
 - Added versioned NPZ loading with pickle disabled and read-only fitted parameters.
-- Added internal contributor-count and disclosure diagnostics. Export requires an explicit review acknowledgement; neither the diagnostics nor successful export establish privacy or release approval.
+- Added `disclosure_diagnostics()`: a per-component table of source row counts, rank, constant columns and largest-contributor shares. It applies no thresholds, is not exported and does not establish privacy.
 - Added model-export regression coverage and a focused export/loading guide with compiled HTML for GitHub Pages.
 
 ### Fixed

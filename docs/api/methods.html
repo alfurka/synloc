@@ -73,13 +73,11 @@ methods used in the README examples.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="synloc.LocalCov.prepare_export">
-<span class="sig-name descname"><span class="pre">prepare_export</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_components</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimum_contributors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/dists.html#LocalCov.prepare_export"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.LocalCov.prepare_export" title="Link to this definition">¶</a></dt>
-<dd><p>Select anchors and fit a fixed, reviewable parameter-only export proposal.</p>
+<span class="sig-name descname"><span class="pre">prepare_export</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_components</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/dists.html#LocalCov.prepare_export"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.LocalCov.prepare_export" title="Link to this definition">¶</a></dt>
+<dd><p>Select anchors and fit a fixed parameter-only export proposal.</p>
 <p><code class="docutils literal notranslate"><span class="pre">n_components=None</span></code> selects all anchors. A smaller positive count
 selects distinct anchors uniformly without replacement. Every selected
-neighbourhood is found in the full source data. <code class="docutils literal notranslate"><span class="pre">minimum_contributors</span></code>
-optionally blocks export if the actual number of rows is insufficient;
-it is not a privacy guarantee.</p>
+neighbourhood is found in the full source data.</p>
 </dd></dl>
 
 </dd></dl>
@@ -101,12 +99,6 @@ with the covariance matrix estimated from the clusters.</p>
 </ul>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="synloc.clusterCov.clearance_report">
-<span class="sig-name descname"><span class="pre">clearance_report</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/dists.html#clusterCov.clearance_report"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.clusterCov.clearance_report" title="Link to this definition">¶</a></dt>
-<dd><p>Return internal JSON-serializable diagnostics, never release approval.</p>
-</dd></dl>
-
 <dl class="py property">
 <dt class="sig sig-object py" id="synloc.clusterCov.columns">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">columns</span></span><a class="headerlink" href="#synloc.clusterCov.columns" title="Link to this definition">¶</a></dt>
@@ -118,21 +110,29 @@ with the covariance matrix estimated from the clusters.</p>
 <dd></dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="synloc.clusterCov.disclosure_diagnostics">
+<span class="sig-name descname"><span class="pre">disclosure_diagnostics</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/dists.html#clusterCov.disclosure_diagnostics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.clusterCov.disclosure_diagnostics" title="Link to this definition">¶</a></dt>
+<dd><p>Return per-component diagnostics computed from the source rows.</p>
+<p>One row per component, in the order of <code class="docutils literal notranslate"><span class="pre">means_</span></code>: <code class="docutils literal notranslate"><span class="pre">count</span></code> (source
+rows), <code class="docutils literal notranslate"><span class="pre">rank</span></code> (rank of the centred rows), <code class="docutils literal notranslate"><span class="pre">constant_columns</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">top1_share_&lt;column&gt;</span></code>/<code class="docutils literal notranslate"><span class="pre">top2_share_&lt;column&gt;</span></code> (largest one and two
+values as shares of the component total; <code class="docutils literal notranslate"><span class="pre">NaN</span></code> for negative values or
+a zero total). The diagnostics are confidential, are not exported, apply
+no thresholds and do not establish privacy.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="synloc.clusterCov.export_model">
-<span class="sig-name descname"><span class="pre">export_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">reviewed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/dists.html#clusterCov.export_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.clusterCov.export_model" title="Link to this definition">¶</a></dt>
-<dd><p>Write versioned parameter-only NPZ for an acknowledged research export.</p>
-<p><code class="docutils literal notranslate"><span class="pre">reviewed=True</span></code> acknowledges unresolved privacy review, not approval.
-Failed required contributor checks always block export. Dominance and
-other unresolved diagnostics remain explicit in <code class="docutils literal notranslate"><span class="pre">clearance_report</span></code>.</p>
+<span class="sig-name descname"><span class="pre">export_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/dists.html#clusterCov.export_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.clusterCov.export_model" title="Link to this definition">¶</a></dt>
+<dd><p>Write the fitted parameters to a versioned NPZ file.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="synloc.clusterCov.fit_model">
 <span class="sig-name descname"><span class="pre">fit_model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/synloc/dists.html#clusterCov.fit_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#synloc.clusterCov.fit_model" title="Link to this definition">¶</a></dt>
 <dd><p>Fit raw-unit mixture parameters without generating synthetic records.</p>
-<p>Scaling affects clustering only. Contributor diagnostics assume one
-person per row; they do not establish privacy or regulatory clearance.
-The legacy <code class="xref py py-meth docutils literal notranslate"><span class="pre">fit()</span></code> workflow remains separate and unchanged.</p>
+<p>Normalization affects clustering only; means and covariances are in
+original units. The legacy <code class="xref py py-meth docutils literal notranslate"><span class="pre">fit()</span></code> workflow remains unchanged.</p>
 </dd></dl>
 
 <dl class="py property">

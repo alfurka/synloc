@@ -2,7 +2,7 @@ Version 1.1 notes
 =================
 
 Version 1.1 adds optional parameter-only export for ``clusterCov`` and
-``LocalCov``. The basic
+``LocalCov``, with per-component disclosure diagnostics. The basic
 constructors, ``fit()``, ``synthetic`` and diagnostic methods remain available.
 Model export does not establish disclosure clearance; see :doc:`model_export`.
 
@@ -23,7 +23,7 @@ Corrections in 1.1
   clipping.
 * Fitted mixture parameters are read-only. Callers cannot silently change
   sampling or exported parameters independently of the fitted factors and
-  internal review evidence.
+  diagnostics.
 * Covariance validation and factorization use variance-scaled units. Invalid
   small-scale blocks are no longer hidden by a large variance elsewhere.
   Constant dimensions require exactly zero covariance rows and columns.

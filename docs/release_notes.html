@@ -36,7 +36,7 @@
   <section id="version-1-1-notes">
 <h1>Version 1.1 notes<a class="headerlink" href="#version-1-1-notes" title="Link to this heading">¶</a></h1>
 <p>Version 1.1 adds optional parameter-only export for <code class="docutils literal notranslate"><span class="pre">clusterCov</span></code> and
-<code class="docutils literal notranslate"><span class="pre">LocalCov</span></code>. The basic
+<code class="docutils literal notranslate"><span class="pre">LocalCov</span></code>, with per-component disclosure diagnostics. The basic
 constructors, <code class="docutils literal notranslate"><span class="pre">fit()</span></code>, <code class="docutils literal notranslate"><span class="pre">synthetic</span></code> and diagnostic methods remain available.
 Model export does not establish disclosure clearance; see <a class="reference internal" href="model_export.html"><span class="doc">Model export and loading</span></a>.</p>
 <section id="corrections-in-1-1">
@@ -56,7 +56,7 @@ leaving an earlier fit marked as successful.</p></li>
 clipping.</p></li>
 <li><p>Fitted mixture parameters are read-only. Callers cannot silently change
 sampling or exported parameters independently of the fitted factors and
-internal review evidence.</p></li>
+diagnostics.</p></li>
 <li><p>Covariance validation and factorization use variance-scaled units. Invalid
 small-scale blocks are no longer hidden by a large variance elsewhere.
 Constant dimensions require exactly zero covariance rows and columns.</p></li>

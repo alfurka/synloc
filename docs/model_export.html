@@ -67,10 +67,8 @@ privacy thresholds.</p>
     <span class="n">data</span><span class="p">,</span> <span class="n">n_clusters</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">size_min</span><span class="o">=</span><span class="mi">20</span>
 <span class="p">)</span><span class="o">.</span><span class="n">fit_model</span><span class="p">()</span>
 <span class="c1"># Inspect internally before export.</span>
-<span class="n">report</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">clearance_report</span><span class="p">()</span>
-
-<span class="c1"># Acknowledges unresolved review; does not certify privacy.</span>
-<span class="n">model</span><span class="o">.</span><span class="n">export_model</span><span class="p">(</span><span class="s2">"cluster-model.npz"</span><span class="p">,</span> <span class="n">reviewed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">diagnostics</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">disclosure_diagnostics</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">export_model</span><span class="p">(</span><span class="s2">"cluster-model.npz"</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Weights reflect the final source cluster sizes, not a requested synthetic
@@ -82,14 +80,10 @@ sample size.</p>
 distributions using the full input dataset. It returns a fixed proposal;
 export that proposal, not the original resampler.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">local</span> <span class="o">=</span> <span class="n">sl</span><span class="o">.</span><span class="n">LocalCov</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">K</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">proposal</span> <span class="o">=</span> <span class="n">local</span><span class="o">.</span><span class="n">prepare_export</span><span class="p">(</span>
-    <span class="n">n_components</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
-    <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
-    <span class="n">minimum_contributors</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="n">proposal</span> <span class="o">=</span> <span class="n">local</span><span class="o">.</span><span class="n">prepare_export</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
 <span class="c1"># Inspect the selected components.</span>
-<span class="n">report</span> <span class="o">=</span> <span class="n">proposal</span><span class="o">.</span><span class="n">clearance_report</span><span class="p">()</span>
-<span class="n">proposal</span><span class="o">.</span><span class="n">export_model</span><span class="p">(</span><span class="s2">"local-model.npz"</span><span class="p">,</span> <span class="n">reviewed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">diagnostics</span> <span class="o">=</span> <span class="n">proposal</span><span class="o">.</span><span class="n">disclosure_diagnostics</span><span class="p">()</span>
+<span class="n">proposal</span><span class="o">.</span><span class="n">export_model</span><span class="p">(</span><span class="s2">"local-model.npz"</span><span class="p">)</span>
 </pre></div>
 </div>
 <ul class="simple">
@@ -97,8 +91,6 @@ export that proposal, not the original resampler.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">n_components=50</span></code>: export 50 mean/covariance pairs with equal weights.
 <code class="docutils literal notranslate"><span class="pre">None</span></code> (the default) uses every row as an anchor.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">random_state=42</span></code>: seed for selecting anchors, not for later sampling.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">minimum_contributors=100</span></code>: optional; export is blocked if any selected
-neighbourhood has fewer source rows.</p></li>
 </ul>
 <p>Fewer components change the fitted mixture; they do not guarantee privacy.
 All-component exports can be large: covariance storage grows with
@@ -122,8 +114,8 @@ environment. The fitted <code class="docutils literal notranslate"><span class="
 <section id="what-the-file-contains">
 <h2>What the file contains<a class="headerlink" href="#what-the-file-contains" title="Link to this heading">¶</a></h2>
 <p>The version-1 NPZ stores only <code class="docutils literal notranslate"><span class="pre">version</span></code>, <code class="docutils literal notranslate"><span class="pre">column_names</span></code>, <code class="docutils literal notranslate"><span class="pre">weights</span></code>,
-<code class="docutils literal notranslate"><span class="pre">means</span></code> and <code class="docutils literal notranslate"><span class="pre">covariances</span></code>. It excludes source rows, memberships, explicit
-contributor counts, source minima/maxima and the internal review report.</p>
+<code class="docutils literal notranslate"><span class="pre">means</span></code> and <code class="docutils literal notranslate"><span class="pre">covariances</span></code>. It excludes source rows, memberships, counts,
+source minima/maxima and the disclosure diagnostics.</p>
 <p>Means and covariances are in <strong>original units</strong>. Normalization affects only
 neighbour or cluster selection, so no scaling factors are needed when loading.
 Exported sampling does not clip to source bounds; generated values may be
@@ -131,11 +123,21 @@ negative or otherwise outside the source range. Fitted parameters are read-only.
 </section>
 <section id="before-releasing-a-model">
 <h2>Before releasing a model<a class="headerlink" href="#before-releasing-a-model" title="Link to this heading">¶</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">clearance_report()</span></code> is internal evidence, not a clearance certificate.
-<code class="docutils literal notranslate"><span class="pre">reviewed=True</span></code> acknowledges unresolved disclosure review; it does not grant
-release approval or override a failed required contributor-count check. Counts
-refer to rows, not verified unique people. Keep the report separate from the
-export unless it has its own release review.</p>
+<p><code class="docutils literal notranslate"><span class="pre">disclosure_diagnostics()</span></code> returns one row per component, in the same order
+as <code class="docutils literal notranslate"><span class="pre">means_</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">count</span></code>: source rows in the component.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rank</span></code>: rank of the component’s centred rows. A low rank means the
+component is close to a few records.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">constant_columns</span></code>: variables with one shared value in the component.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">top1_share_&lt;column&gt;</span></code> and <code class="docutils literal notranslate"><span class="pre">top2_share_&lt;column&gt;</span></code>: the largest one and two
+values as shares of the component total; <code class="docutils literal notranslate"><span class="pre">NaN</span></code> if the variable has negative
+values or a zero total.</p></li>
+</ul>
+<p>The diagnostics are computed from the source rows, so keep them confidential;
+they are not written to the exported file. They apply no thresholds and do not
+establish privacy: apply your own disclosure rules before releasing a model.
+Counts refer to rows, not verified unique people.</p>
 <p>Loading validates the numerical format with pickle disabled, <strong>not privacy</strong>.
 Means, covariances, weights, overlapping neighbourhoods and repeated exports can
 still disclose information.</p>
