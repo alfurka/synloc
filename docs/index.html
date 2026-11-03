@@ -42,9 +42,8 @@ numeric tabular data from locally estimated distributions.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">clusterCov</span></code> uses KMeans clusters.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">compareStats</span></code> and <code class="docutils literal notranslate"><span class="pre">quality_report</span></code> summarize utility diagnostics.</p></li>
 </ul>
-<p>Version 1.1 adds optional parameter-only model exports and reproducible seeded
-kNN fitting while retaining the basic constructor and <code class="docutils literal notranslate"><span class="pre">fit()</span></code> workflows.
-See the release notes for corrections and numerical reproducibility limits.</p>
+<p>Version 1.0 keeps the existing constructor and method names while adding
+clearer input checks, quality metrics, tests, and release documentation.</p>
 <div class="toctree-wrapper compound">
 <p class="caption" role="heading"><span class="caption-text">User guide</span></p>
 <ul>
@@ -61,9 +60,6 @@ See the release notes for corrections and numerical reproducibility limits.</p>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="usage.html#nearest-neighbor-resampling">Nearest-neighbor resampling</a></li>
 <li class="toctree-l2"><a class="reference internal" href="usage.html#cluster-resampling">Cluster resampling</a></li>
-<li class="toctree-l2"><a class="reference internal" href="usage.html#distance-and-normalization">Distance and normalization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="usage.html#parameter-only-localcov-models">Parameter-only LocalCov models</a></li>
-<li class="toctree-l2"><a class="reference internal" href="usage.html#parameter-only-clustercov-models">Parameter-only clusterCov models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="usage.html#visualization">Visualization</a></li>
 </ul>
 </li>
@@ -74,6 +70,7 @@ See the release notes for corrections and numerical reproducibility limits.</p>
 <li class="toctree-l2"><a class="reference internal" href="model_export.html#load-and-sample-elsewhere">Load and sample elsewhere</a></li>
 <li class="toctree-l2"><a class="reference internal" href="model_export.html#what-the-file-contains">What the file contains</a></li>
 <li class="toctree-l2"><a class="reference internal" href="model_export.html#before-releasing-a-model">Before releasing a model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="model_export.html#api">API</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="metrics.html">Quality metrics</a><ul>

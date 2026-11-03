@@ -75,6 +75,8 @@ export that proposal, not the original resampler.
 * ``n_components=50``: export 50 mean/covariance pairs with equal weights.
   ``None`` (the default) uses every row as an anchor.
 * ``random_state=42``: seed for selecting anchors, not for later sampling.
+* ``minimum_contributors=100``: optional; export is blocked if any selected
+  neighbourhood has fewer source rows.
 
 Fewer components change the fitted mixture; they do not guarantee privacy.
 All-component exports can be large: covariance storage grows with
@@ -123,4 +125,8 @@ Loading validates the numerical format with pickle disabled, **not privacy**.
 Means, covariances, weights, overlapping neighbourhoods and repeated exports can
 still disclose information.
 
-See :doc:`usage` for detailed export behaviour and disclosure diagnostics.
+API
+---
+
+.. autoclass:: synloc.ClusterCovSampler
+   :members:

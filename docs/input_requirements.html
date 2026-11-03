@@ -35,8 +35,7 @@
             
   <section id="input-requirements">
 <h1>Input requirements<a class="headerlink" href="#input-requirements" title="Link to this heading">¶</a></h1>
-<p><code class="docutils literal notranslate"><span class="pre">synloc</span></code> expects a real numeric <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code>. Complex-valued inputs
-are rejected rather than converted by discarding their imaginary parts.</p>
+<p><code class="docutils literal notranslate"><span class="pre">synloc</span></code> expects a numeric <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code>.</p>
 <p>Before calling a resampler, prepare the data as follows:</p>
 <ul class="simple">
 <li><p>Encode categorical variables as numeric columns, for example with
@@ -60,15 +59,9 @@ raise a <code class="docutils literal notranslate"><span class="pre">TypeError</
 </section>
 <section id="integer-like-variables">
 <h2>Integer-like variables<a class="headerlink" href="#integer-like-variables" title="Link to this heading">¶</a></h2>
-<p>Synthetic samples are generated as continuous numeric values. For kNN
-resamplers, call <code class="docutils literal notranslate"><span class="pre">round_integers</span></code> after fitting:</p>
+<p>Synthetic samples are generated as continuous numeric values. If a variable
+should be integer-like, call <code class="docutils literal notranslate"><span class="pre">round_integers</span></code> after fitting:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">resampler</span><span class="o">.</span><span class="n">round_integers</span><span class="p">([</span><span class="s2">"age"</span><span class="p">,</span> <span class="s2">"children"</span><span class="p">],</span> <span class="n">stochastic</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</pre></div>
-</div>
-<p><code class="docutils literal notranslate"><span class="pre">clusterCov</span></code> does not provide this method. Round its returned DataFrame
-explicitly instead, for example:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">synthetic</span> <span class="o">=</span> <span class="n">resampler</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
-<span class="n">synthetic</span><span class="p">[[</span><span class="s2">"age"</span><span class="p">,</span> <span class="s2">"children"</span><span class="p">]]</span> <span class="o">=</span> <span class="n">synthetic</span><span class="p">[[</span><span class="s2">"age"</span><span class="p">,</span> <span class="s2">"children"</span><span class="p">]]</span><span class="o">.</span><span class="n">round</span><span class="p">()</span>
 </pre></div>
 </div>
 </section>
