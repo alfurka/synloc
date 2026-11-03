@@ -105,12 +105,6 @@ print(quality["overall"])
 
 `synloc` 1.1 can export a fitted `clusterCov` or `LocalCov` model and generate synthetic data elsewhere without the original records. See the [model export guide](https://alfurka.github.io/synloc/model_export.html).
 
-This feature is currently available from GitHub:
-
-```
-pip install "git+https://github.com/alfurka/synloc.git@main"
-```
-
 ## How to cite?
 
 If you use `synloc` in your research, please cite the following paper:

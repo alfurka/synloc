@@ -4,8 +4,7 @@ Version 1.1 notes
 Version 1.1 adds optional parameter-only export for ``clusterCov`` and
 ``LocalCov``. The basic
 constructors, ``fit()``, ``synthetic`` and diagnostic methods remain available.
-This is a GitHub source release; PyPI publication is separate. Model export does
-not establish disclosure clearance.
+Model export does not establish disclosure clearance; see :doc:`model_export`.
 
 Corrections in 1.1
 ------------------

@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Preserved the basic constructors and `fit()` workflows; `LocalCov` has a trailing optional `random_state`.
 - Exported means and covariances remain in original units; exported sampling does not clip to confidential source bounds.
 - Exact seeded samples can differ from earlier numerical implementations; direct and reloaded samples agree within the same build and numerical environment.
-- This update publishes source and documentation on GitHub, not a PyPI upload. Existing published-paper replication materials are unchanged.
+- Existing published-paper replication materials are unchanged.
 
 ## [1.0.0] - 2026-05-02
 ### Added

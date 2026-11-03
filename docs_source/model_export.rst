@@ -6,12 +6,11 @@ another environment without the original records. These workflows are available
 in ``synloc`` 1.1. They do not require an ordinary ``fit()`` call first;
 the existing ``fit()`` workflow is unchanged.
 
-To install the GitHub source version documented here:
+Upgrade an existing installation with:
 
 .. code-block:: bash
 
-   python -m pip install \
-       "git+https://github.com/alfurka/synloc.git@main"
+   pip install --upgrade synloc
 
 Example input
 -------------
