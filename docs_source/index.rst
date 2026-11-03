@@ -22,7 +22,6 @@ See the release notes for corrections and numerical reproducibility limits.
    input_requirements
    usage
    model_export
-   mixed_cluster
    metrics
    replication
    release_notes

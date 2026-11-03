@@ -2,7 +2,7 @@ Version 1.1 notes
 =================
 
 Version 1.1 adds optional parameter-only export for ``clusterCov`` and
-``LocalCov``, plus public-schema mixed-type cluster exports. The basic
+``LocalCov``. The basic
 constructors, ``fit()``, ``synthetic`` and diagnostic methods remain available.
 This is a GitHub source release; PyPI publication is separate. Model export does
 not establish disclosure clearance.
@@ -28,8 +28,8 @@ Corrections in 1.1
 * Covariance validation and factorization use variance-scaled units. Invalid
   small-scale blocks are no longer hidden by a large variance elsewhere.
   Constant dimensions require exactly zero covariance rows and columns.
-* Real-valued input is required; complex source values and mixed raw scores
-  are rejected before conversion can discard their imaginary parts.
+* Real-valued input is required; complex source values are rejected before
+  conversion can discard their imaginary parts.
 
 The version-1 export schemas are unchanged. The corrected factorization can
 change exact seeded samples relative to previous local builds. Direct and

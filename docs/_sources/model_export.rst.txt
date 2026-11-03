@@ -124,4 +124,3 @@ Means, covariances, weights, overlapping neighbourhoods and repeated exports can
 still disclose information.
 
 See :doc:`usage` for detailed export behaviour and disclosure diagnostics.
-Mixed-type cluster archives use a different loader; see :doc:`mixed_cluster`.

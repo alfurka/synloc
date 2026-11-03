@@ -7,4 +7,3 @@ API reference
    api/resamplers
    api/methods
    api/metrics
-   mixed_cluster

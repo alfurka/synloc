@@ -174,11 +174,6 @@ smaller export guarantees privacy. Overlapping neighbourhoods and repeated
 exports can reveal information jointly. Reports are confidential, and exported
 sampling does not use source bounds. `LocalCov.fit()` remains available.
 
-For mixed categorical and numeric panels, see the separate
-[`MixedClusterCovModel` format](docs_source/mixed_cluster.rst).
-Public category codes and labels and deterministic decoding are included in the
-mixed archive; this does not make decoded data realistic or privacy-safe.
-
 ## How to cite?
 
 If you use `synloc` in your research, please cite the following paper:

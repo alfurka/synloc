@@ -36,7 +36,7 @@
   <section id="version-1-1-notes">
 <h1>Version 1.1 notes<a class="headerlink" href="#version-1-1-notes" title="Link to this heading">¶</a></h1>
 <p>Version 1.1 adds optional parameter-only export for <code class="docutils literal notranslate"><span class="pre">clusterCov</span></code> and
-<code class="docutils literal notranslate"><span class="pre">LocalCov</span></code>, plus public-schema mixed-type cluster exports. The basic
+<code class="docutils literal notranslate"><span class="pre">LocalCov</span></code>. The basic
 constructors, <code class="docutils literal notranslate"><span class="pre">fit()</span></code>, <code class="docutils literal notranslate"><span class="pre">synthetic</span></code> and diagnostic methods remain available.
 This is a GitHub source release; PyPI publication is separate. Model export does
 not establish disclosure clearance.</p>
@@ -61,8 +61,8 @@ internal review evidence.</p></li>
 <li><p>Covariance validation and factorization use variance-scaled units. Invalid
 small-scale blocks are no longer hidden by a large variance elsewhere.
 Constant dimensions require exactly zero covariance rows and columns.</p></li>
-<li><p>Real-valued input is required; complex source values and mixed raw scores
-are rejected before conversion can discard their imaginary parts.</p></li>
+<li><p>Real-valued input is required; complex source values are rejected before
+conversion can discard their imaginary parts.</p></li>
 </ul>
 <p>The version-1 export schemas are unchanged. The corrected factorization can
 change exact seeded samples relative to previous local builds. Direct and
@@ -138,7 +138,6 @@ python<span class="w"> </span>-m<span class="w"> </span>twine<span class="w"> </
 <li class="toctree-l1"><a class="reference internal" href="input_requirements.html">Input requirements</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="model_export.html">Model export and loading</a></li>
-<li class="toctree-l1"><a class="reference internal" href="mixed_cluster.html">Mixed-type clusterCov export</a></li>
 <li class="toctree-l1"><a class="reference internal" href="metrics.html">Quality metrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="replication.html">Replication materials</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Version 1.1 notes</a><ul>
