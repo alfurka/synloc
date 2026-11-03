@@ -71,11 +71,31 @@ synthetic rows generated from that cluster.</p>
 </section>
 <section id="visualization">
 <h2>Visualization<a class="headerlink" href="#visualization" title="Link to this heading">¶</a></h2>
-<p>After fitting, compare one, two, or three variables visually:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">resampler</span><span class="o">.</span><span class="n">comparePlots</span><span class="p">([</span><span class="s2">"x"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">])</span>
-<span class="n">resampler</span><span class="o">.</span><span class="n">comparePlots</span><span class="p">([</span><span class="s2">"x"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">,</span> <span class="s2">"z"</span><span class="p">])</span>
+<p>After fitting, compare one, two, or three variables visually. The figures below
+use the <code class="docutils literal notranslate"><span class="pre">LocalCov</span></code> example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">sample_trivariate_xyz</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+<span class="n">resampler</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">LocalCov</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">K</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">synthetic</span> <span class="o">=</span> <span class="n">resampler</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
 </pre></div>
 </div>
+<p>One variable gives overlaid histograms:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">resampler</span><span class="o">.</span><span class="n">comparePlots</span><span class="p">([</span><span class="s2">"x"</span><span class="p">])</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="_images/compare_plots_x.png"><img alt="Histograms of x in the original and synthetic samples" src="_images/compare_plots_x.png" style="width: 70%;" />
+</a>
+<p>Two variables give side-by-side scatter plots:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">resampler</span><span class="o">.</span><span class="n">comparePlots</span><span class="p">([</span><span class="s2">"x"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">])</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="_images/compare_plots_xy.png"><img alt="Scatter plots of x and y in the original and synthetic samples" src="_images/compare_plots_xy.png" style="width: 100%;" />
+</a>
+<p>Three variables give side-by-side 3-D scatter plots:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">resampler</span><span class="o">.</span><span class="n">comparePlots</span><span class="p">([</span><span class="s2">"x"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">,</span> <span class="s2">"z"</span><span class="p">])</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="_images/compare_plots_xyz.png"><img alt="3-D scatter plots of x, y and z in the original and synthetic samples" src="_images/compare_plots_xyz.png" style="width: 100%;" />
+</a>
 <p>The plotting helper is intended for quick diagnostics. For publication figures,
 use the returned synthetic data with your preferred plotting workflow.</p>
 </section>
